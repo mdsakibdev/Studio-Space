@@ -14,7 +14,11 @@ import {
   ArrowRight,
   Globe,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
+
 import { toast } from "sonner";
+import { authClient } from "@/lib/auth-client";
+
 
 export default function RegisterPage() {
   const [name, setName] = useState("");
@@ -25,51 +29,84 @@ export default function RegisterPage() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, ] = useState(false);
 
   // Check password requirements
   const hasMinLength = password.length >= 6;
   const hasUppercase = /[A-Z]/.test(password);
   const hasLowercase = /[a-z]/.test(password);
+  const router = useRouter();
 
   // Handle registration form submission
   const handleRegister = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (!name.trim() || !email.trim() || !password || !confirmPassword) {
-      toast.error("Please fill in all required fields.");
-      return;
-    }
+  // Check required fields
+  if (!name.trim() || !email.trim() || !password || !confirmPassword) {
+    toast.error("Please fill in all required fields.");
+    return;
+  }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      toast.error("Please enter a valid email address.");
-      return;
-    }
+  // Check email
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    toast.error("Please enter a valid email address.");
+    return;
+  }
 
-    if (!hasMinLength || !hasUppercase || !hasLowercase) {
-      toast.error("Please create a stronger password.");
-      return;
-    }
+  // Check password
+  if (!hasMinLength || !hasUppercase || !hasLowercase) {
+    toast.error("Please create a stronger password.");
+    return;
+  }
 
-    if (password !== confirmPassword) {
-      toast.error("Passwords do not match.");
-      return;
-    }
+  // Check confirm password
+  if (password !== confirmPassword) {
+    toast.error("Passwords do not match.");
+    return;
+  }
 
-    if (photoURL && !/^https?:\/\/.+/i.test(photoURL)) {
+  // Check photo URL
+  if (photoURL.trim()) {
+    try {
+      const imageURL = new URL(photoURL);
+
+      if (!["http:", "https:"].includes(imageURL.protocol)) {
+        toast.error("Please enter a valid photo URL.");
+        return;
+      }
+    } catch {
       toast.error("Please enter a valid photo URL.");
       return;
     }
+  }
 
-    setIsLoading(true);
+  const formData = new FormData(e.currentTarget);
+  const user = Object.fromEntries(formData.entries());
+  console.log("Registering user:", user);
 
-    try {
-      // Backend registration will be connected here.
-      toast.info("Registration service is not connected yet.");
-    } finally {
-      setIsLoading(false);
+  try {
+    // Send registration data to Better Auth
+    const { data, error } = await authClient.signUp.email({
+      name: name.trim(),
+      email: email.trim(),
+      password,
+      image: photoURL.trim() || undefined,
+    });
+
+    if (error) {
+      toast.error(error.message || "Registration failed.");
+      return;
     }
-  };
+
+    if (data) {
+      toast.success("Account created successfully!");
+      router.push("/");
+    }
+  } catch (error) {
+    console.error("Registration error:", error);
+    toast.error("Something went wrong. Please try again.");
+  }
+};
 
   return (
     <section className="min-h-[calc(100vh-76px)] bg-background px-4 py-10 sm:px-6 sm:py-14">

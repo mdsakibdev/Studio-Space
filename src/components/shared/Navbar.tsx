@@ -2,9 +2,17 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState, useSyncExternalStore } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import {
+  useState,
+  useSyncExternalStore,
+  useEffect,
+  useRef,
+} from "react";
 import { useTheme } from "next-themes";
+import { authClient } from "@/lib/auth-client";
+import { toast } from "sonner";
+
 import {
   Aperture,
   Menu,
@@ -12,7 +20,24 @@ import {
   ArrowUpRight,
   Sun,
   Moon,
+  UserRound,
+  ChevronDown,
+  LayoutDashboard,
+  PlusCircle,
+  Building2,
+  CalendarCheck,
+  LogOut,
 } from "lucide-react";
+
+import {
+  Avatar,
+  AvatarImage,
+  AvatarFallback,
+} from "@/components/ui/avatar";
+
+// --------------------------------------
+// Navigation Links
+// --------------------------------------
 
 const navLinks = [
   { name: "Home", href: "/" },
@@ -21,32 +46,262 @@ const navLinks = [
   { name: "About Us", href: "/#about" },
 ];
 
+const userLinks = [
+  {
+    name: "Dashboard",
+    href: "/dashboard",
+    icon: LayoutDashboard,
+  },
+  {
+    name: "Add New Studio",
+    href: "/studios/new",
+    icon: PlusCircle,
+  },
+  {
+    name: "My Studio Listings",
+    href: "/my-studios",
+    icon: Building2,
+  },
+  {
+    name: "My Bookings",
+    href: "/my-bookings",
+    icon: CalendarCheck,
+  },
+];
+
+// --------------------------------------
+// Types
+// --------------------------------------
+
+type NavbarUser = {
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+};
+
+type UserAvatarProps = {
+  user: NavbarUser;
+  size?: "sm" | "md" | "lg";
+};
+
+// --------------------------------------
+// Avatar Component
+// --------------------------------------
+
+function UserAvatar({ user, size = "md" }: UserAvatarProps) {
+  const sizeClass = {
+    sm: "h-9 w-9",
+    md: "h-10 w-10",
+    lg: "h-11 w-11",
+  };
+
+  const initials =
+    user.name
+      ?.trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((part) => part.charAt(0))
+      .join("")
+      .toUpperCase() || "U";
+
+  return (
+    <Avatar
+      className={`${sizeClass[size]} shrink-0 border border-border`}
+    >
+      <AvatarImage
+        src={user.image || undefined}
+        alt={user.name || "User"}
+      />
+
+      <AvatarFallback className="bg-surface-hover text-sm font-semibold text-foreground">
+        {user.name ? initials : <UserRound size={18} />}
+      </AvatarFallback>
+    </Avatar>
+  );
+}
+
+// --------------------------------------
+// Profile Links Component
+// --------------------------------------
+
+function ProfileLinks({
+  onNavigate,
+}: {
+  onNavigate: () => void;
+}) {
+  return (
+    <>
+      {userLinks.map((link) => {
+        const Icon = link.icon;
+
+        return (
+          <Link
+            key={link.name}
+            href={link.href}
+            onClick={onNavigate}
+            className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-surface-hover hover:text-foreground"
+          >
+            <Icon size={18} />
+            {link.name}
+          </Link>
+        );
+      })}
+    </>
+  );
+}
+
+// --------------------------------------
+// Logout Button Component
+// --------------------------------------
+
+function LogoutButton({
+  onLogout,
+}: {
+  onLogout: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onLogout}
+      className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-red-500 transition-colors hover:bg-red-500/10"
+    >
+      <LogOut size={18} />
+      Logout
+    </button>
+  );
+}
+
+// --------------------------------------
+// Hydration Helpers
+// --------------------------------------
+
 const subscribe = () => () => {};
 const getClientSnapshot = () => true;
 const getServerSnapshot = () => false;
 
+function ThemeToggle({
+  isDark,
+  mounted,
+  onToggle,
+}: {
+  isDark: boolean;
+  mounted: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      disabled={!mounted}
+      aria-label="Toggle theme"
+      title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border text-foreground transition-colors hover:bg-surface-hover disabled:opacity-50"
+    >
+      {mounted && isDark ? <Sun size={19} /> : <Moon size={19} />}
+    </button>
+  );
+}
+
+// --------------------------------------
+// Main Navbar
+// --------------------------------------
+
 export default function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
+
   const { resolvedTheme, setTheme } = useTheme();
 
+  // Better Auth session
+  const { data: session, isPending } = authClient.useSession();
+  const user = session?.user;
+
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+
+  const profileMenuRef = useRef<HTMLDivElement>(null);
+
   const mounted = useSyncExternalStore(
     subscribe,
     getClientSnapshot,
-    getServerSnapshot,
+    getServerSnapshot
   );
 
   const isDark = resolvedTheme === "dark";
+
+  // --------------------------------------
+  // Close profile dropdown on outside click
+  // --------------------------------------
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        profileMenuRef.current &&
+        !profileMenuRef.current.contains(event.target as Node)
+      ) {
+        setProfileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  // --------------------------------------
+  // Theme Toggle
+  // --------------------------------------
 
   const toggleTheme = () => {
     setTheme(isDark ? "light" : "dark");
   };
 
+  // --------------------------------------
+  // Active Navigation
+  // --------------------------------------
+
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
+
     if (href.startsWith("/#")) return false;
 
     return pathname === href || pathname.startsWith(`${href}/`);
+  };
+
+  // --------------------------------------
+  // Close Menus
+  // --------------------------------------
+
+  const closeMenus = () => {
+    setMobileMenuOpen(false);
+    setProfileMenuOpen(false);
+  };
+
+  // --------------------------------------
+  // Better Auth Logout
+  // --------------------------------------
+
+  const handleLogout = async () => {
+    try {
+      const { error } = await authClient.signOut();
+
+      if (error) {
+        toast.error(error.message || "Logout failed.");
+        return;
+      }
+
+      closeMenus();
+
+      toast.success("Logged out successfully.");
+
+      router.push("/");
+      router.refresh();
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Something went wrong. Please try again.");
+    }
   };
 
   return (
@@ -56,7 +311,7 @@ export default function Navbar() {
         {/* Logo */}
         <Link
           href="/"
-          onClick={() => setMobileMenuOpen(false)}
+          onClick={closeMenus}
           className="group flex shrink-0 items-center gap-3"
           aria-label="StudioSpace Home"
         >
@@ -68,6 +323,7 @@ export default function Navbar() {
             <span className="text-[21px] font-bold tracking-tight text-foreground">
               Studio<span className="text-primary">Space</span>
             </span>
+
             <span className="text-[9px] font-medium uppercase tracking-[3px] text-muted-foreground">
               Create Beyond Limits
             </span>
@@ -95,60 +351,102 @@ export default function Navbar() {
           ))}
         </div>
 
-        {/* Right Actions */}
+        {/* Desktop Right Actions */}
         <div className="hidden items-center gap-3 lg:flex">
 
-          {/* Theme Toggle */}
-          <button
-            type="button"
-            onClick={toggleTheme}
-            disabled={!mounted}
-            aria-label="Toggle theme"
-            title={isDark ? "Switch to light mode" : "Switch to dark mode"}
-            className="flex h-10 w-10 items-center justify-center rounded-lg border border-border text-foreground transition-all hover:bg-surface-hover disabled:opacity-50"
-          >
-            {mounted && isDark ? (
-              <Sun size={19} />
-            ) : (
-              <Moon size={19} />
-            )}
-          </button>
+          <ThemeToggle isDark={isDark} mounted={mounted} onToggle={toggleTheme} />
 
-          <Link
-            href="/login"
-            className="rounded-lg px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Log In
-          </Link>
+          {/* Authentication */}
+          {!isPending && !user && (
+            <>
+              <Link
+                href="/login"
+                className="rounded-lg px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Log In
+              </Link>
 
-          <Link
-            href="/register"
-            className="group flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-all duration-300 hover:opacity-90 hover:shadow-lg"
-          >
-            Get Started
-            <ArrowUpRight
-              size={16}
-              className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
-            />
-          </Link>
+              <Link
+                href="/register"
+                className="group flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-all duration-300 hover:opacity-90 hover:shadow-lg"
+              >
+                Get Started
+                <ArrowUpRight
+                  size={16}
+                  className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+                />
+              </Link>
+            </>
+          )}
+
+          {/* Logged In User */}
+          {!isPending && user && (
+            <div className="relative" ref={profileMenuRef}>
+              <button
+                type="button"
+                onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+                className="flex items-center gap-2 rounded-full border border-border p-1.5 pr-3 transition-colors hover:bg-surface-hover"
+                aria-label="Open profile menu"
+                aria-expanded={profileMenuOpen}
+              >
+                <UserAvatar user={user} size="sm" />
+
+                <ChevronDown
+                  size={16}
+                  className={`text-muted-foreground transition-transform ${
+                    profileMenuOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              {/* Profile Dropdown */}
+              {profileMenuOpen && (
+                <div className="absolute right-0 top-full mt-3 w-64 rounded-xl border border-border bg-background p-2 shadow-2xl">
+                  <div className="flex items-center gap-3 px-3 py-3">
+                    <UserAvatar user={user} size="lg" />
+
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-foreground">
+                        {user.name}
+                      </p>
+
+                      <p className="truncate text-xs text-muted-foreground">
+                        {user.email}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="my-2 border-t border-border" />
+
+                  <ProfileLinks onNavigate={closeMenus} />
+
+                  <div className="my-2 border-t border-border" />
+
+                  <LogoutButton onLogout={handleLogout} />
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Mobile Actions */}
         <div className="flex items-center gap-2 lg:hidden">
-          <button
-            type="button"
-            onClick={toggleTheme}
-            disabled={!mounted}
-            aria-label="Toggle theme"
-            className="flex h-10 w-10 items-center justify-center rounded-lg border border-border text-foreground transition-colors hover:bg-surface-hover disabled:opacity-50"
-          >
-            {mounted && isDark ? (
-              <Sun size={19} />
-            ) : (
-              <Moon size={19} />
-            )}
-          </button>
 
+          <ThemeToggle isDark={isDark} mounted={mounted} onToggle={toggleTheme} />
+
+          {/* Mobile Profile Avatar */}
+          {!isPending && user && (
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Open profile menu"
+              className="rounded-full"
+            >
+              <UserAvatar user={user} size="sm" />
+            </button>
+          )}
+
+          {/* Mobile Menu Button */}
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -165,17 +463,18 @@ export default function Navbar() {
       <div
         className={`overflow-hidden border-t border-border bg-background transition-all duration-300 lg:hidden ${
           mobileMenuOpen
-            ? "max-h-112.5 opacity-100"
+            ? "max-h-175 overflow-y-auto opacity-100"
             : "max-h-0 border-transparent opacity-0"
         }`}
       >
         <div className="space-y-1 px-5 py-5 sm:px-8">
 
+          {/* Main Navigation Links */}
           {navLinks.map((link) => (
             <Link
               key={link.name}
               href={link.href}
-              onClick={() => setMobileMenuOpen(false)}
+              onClick={closeMenus}
               className={`flex items-center justify-between rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
                 isActive(link.href)
                   ? "bg-accent text-accent-foreground"
@@ -190,24 +489,57 @@ export default function Navbar() {
             </Link>
           ))}
 
-          <div className="grid grid-cols-2 gap-3 border-t border-border pt-5">
-            <Link
-              href="/login"
-              onClick={() => setMobileMenuOpen(false)}
-              className="rounded-lg border border-border px-4 py-3 text-center text-sm font-medium text-foreground transition-colors hover:bg-surface-hover"
-            >
-              Log In
-            </Link>
+          {/* Mobile Authentication */}
+          {!isPending && !user && (
+            <div className="grid grid-cols-2 gap-3 border-t border-border pt-5">
+              <Link
+                href="/login"
+                onClick={closeMenus}
+                className="rounded-lg border border-border px-4 py-3 text-center text-sm font-medium text-foreground transition-colors hover:bg-surface-hover"
+              >
+                Log In
+              </Link>
 
-            <Link
-              href="/register"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center justify-center gap-1 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:opacity-90"
-            >
-              Get Started
-              <ArrowUpRight size={15} />
-            </Link>
-          </div>
+              <Link
+                href="/register"
+                onClick={closeMenus}
+                className="flex items-center justify-center gap-1 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:opacity-90"
+              >
+                Get Started
+                <ArrowUpRight size={15} />
+              </Link>
+            </div>
+          )}
+
+          {/* Mobile Logged In User */}
+          {!isPending && user && (
+            <div className="mt-4 border-t border-border pt-4">
+
+              {/* User Information */}
+              <div className="flex items-center gap-3 px-3 py-3">
+                <UserAvatar user={user} size="lg" />
+
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-foreground">
+                    {user.name}
+                  </p>
+
+                  <p className="truncate text-xs text-muted-foreground">
+                    {user.email}
+                  </p>
+                </div>
+              </div>
+
+              {/* User Menu Links */}
+              <div className="mt-2 space-y-1">
+                <ProfileLinks onNavigate={closeMenus} />
+              </div>
+
+              <div className="my-3 border-t border-border" />
+
+              <LogoutButton onLogout={handleLogout} />
+            </div>
+          )}
         </div>
       </div>
     </header>

@@ -3,6 +3,8 @@
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+
 import {
   Aperture,
   Eye,
@@ -11,9 +13,13 @@ import {
   Mail,
   ArrowRight,
 } from "lucide-react";
+
 import { toast } from "sonner";
+import { authClient } from "@/lib/auth-client";
 
 export default function LoginPage() {
+  const router = useRouter();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -23,12 +29,14 @@ export default function LoginPage() {
   const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
+    // Check required fields
     if (!email.trim() || !password) {
       toast.error("Please enter your email and password.");
       return;
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    // Validate email
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       toast.error("Please enter a valid email address.");
       return;
     }
@@ -36,8 +44,29 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      // Backend authentication will be connected here.
-      toast.info("Authentication service is not connected yet.");
+      // Login using Better Auth
+      const { data, error } = await authClient.signIn.email({
+        email: email.trim(),
+        password,
+      });
+
+      // Handle authentication error
+      if (error) {
+        toast.error(error.message || "Invalid email or password.");
+        return;
+      }
+
+      // Handle successful login
+      if (data) {
+        toast.success("Login successful!");
+
+        router.replace("/");
+        router.refresh();
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -117,12 +146,14 @@ export default function LoginPage() {
 
                   <input
                     id="email"
+                    name="email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
                     autoComplete="email"
-                    className="h-12 w-full rounded-xl border border-border bg-background pl-11 pr-4 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    disabled={isLoading}
+                    className="h-12 w-full rounded-xl border border-border bg-background pl-11 pr-4 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-60"
                     required
                   />
                 </div>
@@ -154,12 +185,14 @@ export default function LoginPage() {
 
                   <input
                     id="password"
+                    name="password"
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter your password"
                     autoComplete="current-password"
-                    className="h-12 w-full rounded-xl border border-border bg-background pl-11 pr-12 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    disabled={isLoading}
+                    className="h-12 w-full rounded-xl border border-border bg-background pl-11 pr-12 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-60"
                     required
                   />
 
@@ -167,7 +200,9 @@ export default function LoginPage() {
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground transition hover:text-foreground"
-                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }
                   >
                     {showPassword ? (
                       <EyeOff size={18} />
@@ -184,8 +219,17 @@ export default function LoginPage() {
                 disabled={isLoading}
                 className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary font-semibold text-primary-foreground transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isLoading ? "Please wait..." : "Sign In"}
-                {!isLoading && <ArrowRight size={18} />}
+                {isLoading ? (
+                  <>
+                    <span className="h-5 w-5 animate-spin rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground" />
+                    Please wait...
+                  </>
+                ) : (
+                  <>
+                    Sign In
+                    <ArrowRight size={18} />
+                  </>
+                )}
               </button>
             </form>
 
