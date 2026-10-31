@@ -1,5 +1,6 @@
 import HeroSlider from "@/components/home/HeroSlider";
 import BrowseCategories from "@/components/home/BrowseCategories";
+import FeaturedStudios from "@/components/home/FeaturedStudios";
 
 
 export default function Home() {
@@ -7,7 +8,7 @@ export default function Home() {
     <div>
       <HeroSlider/>
       <BrowseCategories/>
-      
+      <FeaturedStudios />
       
     </div>
   );
