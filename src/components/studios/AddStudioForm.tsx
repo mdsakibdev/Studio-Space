@@ -376,8 +376,8 @@ export default function AddStudioForm({
           updatedAt: new Date().toISOString(),
         };
 
-        onSuccess?.(updatedStudio);
         toast.success("Studio updated successfully!");
+        onSuccess?.(updatedStudio);
       } else {
         toast.success("Studio added successfully!");
         console.log("Saved Studio:", result);
@@ -706,11 +706,10 @@ export default function AddStudioForm({
               return (
                 <label
                   key={amenity}
-                  className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3.5 text-sm transition ${
-                    selected
+                  className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3.5 text-sm transition ${selected
                       ? "border-[#d6a75c]/50 bg-[#d6a75c]/10 text-foreground"
                       : "border-border bg-background text-muted-foreground hover:border-[#d6a75c]/40"
-                  }`}
+                    }`}
                 >
                   <input
                     type="checkbox"
@@ -721,11 +720,10 @@ export default function AddStudioForm({
                     className="sr-only"
                   />
                   <span
-                    className={`flex h-5 w-5 items-center justify-center rounded-md border ${
-                      selected
+                    className={`flex h-5 w-5 items-center justify-center rounded-md border ${selected
                         ? "border-[#d6a75c] bg-[#d6a75c] text-neutral-950"
                         : "border-border"
-                    }`}
+                      }`}
                   >
                     {selected && <Check size={13} />}
                   </span>
@@ -752,11 +750,10 @@ export default function AddStudioForm({
               return (
                 <label
                   key={item}
-                  className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3.5 text-sm transition ${
-                    selected
+                  className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3.5 text-sm transition ${selected
                       ? "border-[#d6a75c]/50 bg-[#d6a75c]/10 text-foreground"
                       : "border-border bg-background text-muted-foreground hover:border-[#d6a75c]/40"
-                  }`}
+                    }`}
                 >
                   <input
                     type="checkbox"
@@ -767,11 +764,10 @@ export default function AddStudioForm({
                     className="sr-only"
                   />
                   <span
-                    className={`flex h-5 w-5 items-center justify-center rounded-md border ${
-                      selected
+                    className={`flex h-5 w-5 items-center justify-center rounded-md border ${selected
                         ? "border-[#d6a75c] bg-[#d6a75c] text-neutral-950"
                         : "border-border"
-                    }`}
+                      }`}
                   >
                     {selected && <Check size={13} />}
                   </span>
@@ -800,11 +796,10 @@ export default function AddStudioForm({
                 return (
                   <label
                     key={day}
-                    className={`flex cursor-pointer items-center gap-2 rounded-xl border p-3 text-sm transition ${
-                      selected
+                    className={`flex cursor-pointer items-center gap-2 rounded-xl border p-3 text-sm transition ${selected
                         ? "border-[#d6a75c]/50 bg-[#d6a75c]/10 text-foreground"
                         : "border-border bg-background text-muted-foreground"
-                    }`}
+                      }`}
                   >
                     <input
                       type="checkbox"

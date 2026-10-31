@@ -54,6 +54,17 @@ export default function ExploreStudios() {
   const [appliedMax, setAppliedMax] = useState("");
   const [sortBy, setSortBy] = useState("newest");
   const [favorites, setFavorites] = useState<string[]>([]);
+  // URL থেকে category নিয়ে filter select করা
+useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  const categoryFromUrl = params.get("category");
+
+  const isValidCategory = categories.some(
+    (category) => category.value === categoryFromUrl
+  );
+
+  setSelectedCategory(isValidCategory ? categoryFromUrl! : "all");
+}, []);
 
   // MongoDB থেকে সব Studio নিয়ে আসা
   useEffect(() => {

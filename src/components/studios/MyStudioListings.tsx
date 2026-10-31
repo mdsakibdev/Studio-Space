@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Search,
@@ -28,6 +29,7 @@ export default function MyStudioListings() {
 
   const [studios, setStudios] = useState<Studio[]>([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
@@ -103,9 +105,9 @@ export default function MyStudioListings() {
   });
 
   // Edit Studio
-  const handleEdit = (studio: Studio) => {
-    setEditingStudio(studio);
-  };
+ const handleEdit = (studio: Studio) => {
+  router.push(`/studios/edit/${studio._id}`);
+};
 
   // Update Listing After Successful Edit
   const handleUpdateSuccess = (updatedStudio: Studio) => {

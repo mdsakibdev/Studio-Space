@@ -22,7 +22,6 @@ import {
   Moon,
   UserRound,
   ChevronDown,
-  LayoutDashboard,
   PlusCircle,
   Building2,
   CalendarCheck,
@@ -47,11 +46,7 @@ const navLinks = [
 ];
 
 const userLinks = [
-  {
-    name: "Dashboard",
-    href: "/dashboard",
-    icon: LayoutDashboard,
-  },
+  
   {
     name: "Add New Studio",
     href: "/studios/new",
