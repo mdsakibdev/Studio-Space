@@ -203,3 +203,20 @@ img {
 ::view-transition-new(root) {
   animation-duration: 0.25s;
 }
+
+
+/* StudioSpace Hero Slider */
+.studio-hero-pagination .swiper-pagination-bullet {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: #ffffff;
+  opacity: 0.5;
+  transition: all 0.3s ease;
+}
+
+.studio-hero-pagination .swiper-pagination-bullet-active {
+  width: 30px;
+  background: #d6a75c;
+  opacity: 1;
+}

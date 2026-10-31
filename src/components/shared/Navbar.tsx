@@ -179,28 +179,38 @@ const subscribe = () => () => {};
 const getClientSnapshot = () => true;
 const getServerSnapshot = () => false;
 
+
+interface ThemeToggleProps {
+  isDark: boolean;
+  mounted: boolean;
+  onToggle: () => void;
+}
+
 function ThemeToggle({
   isDark,
   mounted,
   onToggle,
-}: {
-  isDark: boolean;
-  mounted: boolean;
-  onToggle: () => void;
-}) {
+}: ThemeToggleProps) {
   return (
     <button
       type="button"
       onClick={onToggle}
       disabled={!mounted}
-      aria-label="Toggle theme"
+      aria-label={
+        isDark ? "Switch to light mode" : "Switch to dark mode"
+      }
       title={isDark ? "Switch to light mode" : "Switch to dark mode"}
-      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border text-foreground transition-colors hover:bg-surface-hover disabled:opacity-50"
+      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border text-foreground transition-colors hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-50"
     >
-      {mounted && isDark ? <Sun size={19} /> : <Moon size={19} />}
+      {mounted ? (
+        isDark ? <Sun size={19} /> : <Moon size={19} />
+      ) : (
+        <Moon size={19} className="opacity-50" />
+      )}
     </button>
   );
 }
+
 
 // --------------------------------------
 // Main Navbar
