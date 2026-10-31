@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { X, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
 
 interface Studio {
   _id: string;
@@ -32,6 +33,7 @@ export default function BookingModal({
   const [gearNotes, setGearNotes] = useState("");
   const [minDate, setMinDate] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
 
   const { data: session } = authClient.useSession();
 
@@ -136,7 +138,7 @@ export default function BookingModal({
 
       console.log("Booking Result:", result);
 
-      onClose();
+      router.push("/my-bookings");
 
     } catch (error) {
       console.error("Booking Error:", error);
