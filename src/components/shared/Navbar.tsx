@@ -2,6 +2,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import {
   useState,
@@ -46,7 +47,7 @@ const navLinks = [
 ];
 
 const userLinks = [
-  
+
   {
     name: "Add New Studio",
     href: "/studios/new",
@@ -170,10 +171,9 @@ function LogoutButton({
 // Hydration Helpers
 // --------------------------------------
 
-const subscribe = () => () => {};
+const subscribe = () => () => { };
 const getClientSnapshot = () => true;
 const getServerSnapshot = () => false;
-
 
 interface ThemeToggleProps {
   isDark: boolean;
@@ -191,16 +191,16 @@ function ThemeToggle({
       type="button"
       onClick={onToggle}
       disabled={!mounted}
-      aria-label={
-        isDark ? "Switch to light mode" : "Switch to dark mode"
-      }
+      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
       title={isDark ? "Switch to light mode" : "Switch to dark mode"}
-      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border text-foreground transition-colors hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-50"
+      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border bg-card text-foreground transition-colors hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-50"
     >
-      {mounted ? (
-        isDark ? <Sun size={19} /> : <Moon size={19} />
+      {!mounted ? (
+        <Moon size={19} />
+      ) : isDark ? (
+        <Sun size={19} />
       ) : (
-        <Moon size={19} className="opacity-50" />
+        <Moon size={19} />
       )}
     </button>
   );
@@ -313,26 +313,21 @@ export default function Navbar() {
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur-xl">
       <nav className="mx-auto flex h-19 max-w-360 items-center justify-between px-5 sm:px-8 lg:px-12">
 
-        {/* Logo */}
+        {/* StudioSpace Logo */}
         <Link
           href="/"
           onClick={closeMenus}
-          className="group flex shrink-0 items-center gap-3"
+          className="flex shrink-0 items-center"
           aria-label="StudioSpace Home"
         >
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-primary-foreground transition-transform duration-300 group-hover:rotate-12">
-            <Aperture size={27} strokeWidth={2.2} />
-          </div>
-
-          <div className="flex flex-col">
-            <span className="text-[21px] font-bold tracking-tight text-foreground">
-              Studio<span className="text-primary">Space</span>
-            </span>
-
-            <span className="text-[9px] font-medium uppercase tracking-[3px] text-muted-foreground">
-              Create Beyond Limits
-            </span>
-          </div>
+          <Image
+            src="/images/studiospace-logo.png"
+            alt="StudioSpace"
+            width={220}
+            height={80}
+            priority
+            className="h-12 w-auto object-contain sm:h-14"
+          />
         </Link>
 
         {/* Desktop Navigation */}
@@ -341,11 +336,10 @@ export default function Navbar() {
             <Link
               key={link.name}
               href={link.href}
-              className={`relative py-2 text-[13px] font-medium transition-colors duration-200 ${
-                isActive(link.href)
+              className={`relative py-2 text-[13px] font-medium transition-colors duration-200 ${isActive(link.href)
                   ? "text-primary"
                   : "text-muted-foreground hover:text-foreground"
-              }`}
+                }`}
             >
               {link.name}
 
@@ -398,9 +392,8 @@ export default function Navbar() {
 
                 <ChevronDown
                   size={16}
-                  className={`text-muted-foreground transition-transform ${
-                    profileMenuOpen ? "rotate-180" : ""
-                  }`}
+                  className={`text-muted-foreground transition-transform ${profileMenuOpen ? "rotate-180" : ""
+                    }`}
                 />
               </button>
 
@@ -466,11 +459,10 @@ export default function Navbar() {
 
       {/* Mobile Navigation */}
       <div
-        className={`overflow-hidden border-t border-border bg-background transition-all duration-300 lg:hidden ${
-          mobileMenuOpen
+        className={`overflow-hidden border-t border-border bg-background transition-all duration-300 lg:hidden ${mobileMenuOpen
             ? "max-h-175 overflow-y-auto opacity-100"
             : "max-h-0 border-transparent opacity-0"
-        }`}
+          }`}
       >
         <div className="space-y-1 px-5 py-5 sm:px-8">
 
@@ -480,11 +472,10 @@ export default function Navbar() {
               key={link.name}
               href={link.href}
               onClick={closeMenus}
-              className={`flex items-center justify-between rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
-                isActive(link.href)
+              className={`flex items-center justify-between rounded-lg px-4 py-3 text-sm font-medium transition-colors ${isActive(link.href)
                   ? "bg-accent text-accent-foreground"
                   : "text-muted-foreground hover:bg-surface-hover hover:text-foreground"
-              }`}
+                }`}
             >
               {link.name}
 

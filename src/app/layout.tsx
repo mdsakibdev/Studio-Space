@@ -5,6 +5,7 @@ import "./globals.css";
 import Navbar from "@/components/shared/Navbar";
 import ThemeProvider from "@/components/shared/ThemeProvider";
 import { Toaster } from "sonner";
+import Footer from "@/components/shared/Footer";
 
 export const metadata: Metadata = {
   title: {
@@ -31,6 +32,8 @@ export default function RootLayout({
           <main className="min-h-screen">
             {children}
           </main>
+
+          <Footer/>
 
           <Toaster
             position="bottom-right"
