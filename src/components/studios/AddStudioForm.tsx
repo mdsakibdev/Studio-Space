@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, type FormEvent } from "react";
@@ -16,7 +17,6 @@ import {
   UploadCloud,
 } from "lucide-react";
 import { toast } from "sonner";
-
 import { authClient } from "@/lib/auth-client";
 
 const categories = [
@@ -61,6 +61,43 @@ const availableDays = [
   "Sunday",
 ];
 
+export interface ExistingStudio {
+  _id: string;
+  title: string;
+  category: string;
+  overview: string;
+  imageUrl: string;
+  galleryImages?: string[];
+  hourlyRate: number;
+  securityDeposit: number;
+  maxCapacity: number;
+  minBookingHours: number;
+  location: {
+    city: string;
+    area: string;
+    address: string;
+  };
+  amenities?: string[];
+  equipment?: string[];
+  availability?: {
+    days: string[];
+    openingTime: string;
+    closingTime: string;
+  };
+  cancellationPolicy?: string;
+  studioRules?: string;
+  spaceHighlights?: string[];
+  instantBooking?: boolean;
+  host?: {
+    name: string;
+    email: string;
+  };
+  status?: string;
+  rating?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 interface StudioFormData {
   title: string;
   category: string;
@@ -78,6 +115,12 @@ interface StudioFormData {
   cancellationPolicy: string;
   studioRules: string;
   spaceHighlights: string;
+}
+
+interface AddStudioFormProps {
+  studio?: ExistingStudio;
+  onCancel?: () => void;
+  onSuccess?: (updatedStudio: ExistingStudio) => void;
 }
 
 const initialFormData: StudioFormData = {
@@ -139,26 +182,64 @@ const textareaClass =
 
 const labelClass = "mb-2 block text-sm font-medium text-foreground";
 
-export default function AddStudioForm() {
+export default function AddStudioForm({
+  studio,
+  onCancel,
+  onSuccess,
+}: AddStudioFormProps) {
   const { data: session, isPending } = authClient.useSession();
 
-  const [formData, setFormData] =
-    useState<StudioFormData>(initialFormData);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const [galleryUrls, setGalleryUrls] = useState("");
-  const [amenities, setAmenities] = useState<string[]>([]);
-  const [equipment, setEquipment] = useState<string[]>([]);
-  const [selectedDays, setSelectedDays] = useState<string[]>([
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-  ]);
-  const [instantBooking, setInstantBooking] = useState(false);
-
   const user = session?.user;
+
+  const [formData, setFormData] = useState<StudioFormData>(() => ({
+    ...initialFormData,
+    title: studio?.title || "",
+    category: studio?.category || "",
+    overview: studio?.overview || "",
+    imageUrl: studio?.imageUrl || "",
+    hourlyRate: studio ? String(studio.hourlyRate) : "",
+    securityDeposit: studio ? String(studio.securityDeposit ?? 0) : "0",
+    maxCapacity: studio ? String(studio.maxCapacity) : "",
+    minBookingHours: studio
+      ? String(studio.minBookingHours || 1)
+      : "1",
+    city: studio?.location?.city || "",
+    area: studio?.location?.area || "",
+    address: studio?.location?.address || "",
+    openingTime: studio?.availability?.openingTime || "09:00",
+    closingTime: studio?.availability?.closingTime || "18:00",
+    cancellationPolicy: studio?.cancellationPolicy || "moderate",
+    studioRules: studio?.studioRules || "",
+    spaceHighlights: studio?.spaceHighlights?.join(", ") || "",
+  }));
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [galleryUrls, setGalleryUrls] = useState(
+    studio?.galleryImages?.join("\n") || ""
+  );
+
+  const [amenities, setAmenities] = useState<string[]>(
+    studio?.amenities || []
+  );
+
+  const [equipment, setEquipment] = useState<string[]>(
+    studio?.equipment || []
+  );
+
+  const [selectedDays, setSelectedDays] = useState<string[]>(
+    studio?.availability?.days || [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+    ]
+  );
+
+  const [instantBooking, setInstantBooking] = useState(
+    studio?.instantBooking || false
+  );
 
   const updateField = (
     field: keyof StudioFormData,
@@ -182,96 +263,6 @@ export default function AddStudioForm() {
     }
   };
 
- const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-  event.preventDefault();
-
-  if (!user) {
-    toast.error("Please login first!");
-    return;
-  }
-
-  if (amenities.length === 0) {
-    toast.error("Please select at least one amenity.");
-    return;
-  }
-
-  if (selectedDays.length === 0) {
-    toast.error("Please select available days.");
-    return;
-  }
-
-  const data = {
-    title: formData.title,
-    category: formData.category,
-    overview: formData.overview,
-    imageUrl: formData.imageUrl,
-    galleryImages,
-
-    hourlyRate: Number(formData.hourlyRate),
-    securityDeposit: Number(formData.securityDeposit),
-    maxCapacity: Number(formData.maxCapacity),
-    minBookingHours: Number(formData.minBookingHours),
-
-    location: {
-      city: formData.city,
-      area: formData.area,
-      address: formData.address,
-    },
-
-    amenities,
-    equipment,
-
-    availability: {
-      days: selectedDays,
-      openingTime: formData.openingTime,
-      closingTime: formData.closingTime,
-    },
-
-    cancellationPolicy: formData.cancellationPolicy,
-    studioRules: formData.studioRules,
-
-    spaceHighlights: formData.spaceHighlights
-      .split(",")
-      .map((item) => item.trim())
-      .filter(Boolean),
-
-    instantBooking,
-
-    host: {
-      name: user.name,
-      email: user.email,
-    },
-  };
-
-  try {
-    setIsSubmitting(true);
-
-    const response = await fetch("http://localhost:5000/studios", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.message || "Failed to add studio.");
-    }
-
-    toast.success("Studio added successfully!");
-
-    console.log("Saved Studio:", result);
-
-  } catch (error) {
-    console.error(error);
-    toast.error("Something went wrong!");
-  } finally {
-    setIsSubmitting(false);
-  }
-};
-
   const galleryImages = galleryUrls
     .split("\n")
     .map((url) => url.trim())
@@ -281,32 +272,158 @@ export default function AddStudioForm() {
     formData.imageUrl.startsWith("https://") ||
     formData.imageUrl.startsWith("http://");
 
+  const handleSubmit = async (
+    event: FormEvent<HTMLFormElement>
+  ) => {
+    event.preventDefault();
+
+    if (!user) {
+      toast.error("Please login first!");
+      return;
+    }
+
+    if (amenities.length === 0) {
+      toast.error("Please select at least one amenity.");
+      return;
+    }
+
+    if (selectedDays.length === 0) {
+      toast.error("Please select available days.");
+      return;
+    }
+
+    if (formData.closingTime <= formData.openingTime) {
+      toast.error("Closing time must be later than opening time.");
+      return;
+    }
+
+    const data = {
+      title: formData.title,
+      category: formData.category,
+      overview: formData.overview,
+      imageUrl: formData.imageUrl,
+      galleryImages,
+
+      hourlyRate: Number(formData.hourlyRate),
+      securityDeposit: Number(formData.securityDeposit),
+      maxCapacity: Number(formData.maxCapacity),
+      minBookingHours: Number(formData.minBookingHours),
+
+      location: {
+        city: formData.city,
+        area: formData.area,
+        address: formData.address,
+      },
+
+      amenities,
+      equipment,
+
+      availability: {
+        days: selectedDays,
+        openingTime: formData.openingTime,
+        closingTime: formData.closingTime,
+      },
+
+      cancellationPolicy: formData.cancellationPolicy,
+      studioRules: formData.studioRules,
+
+      spaceHighlights: formData.spaceHighlights
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean),
+
+      instantBooking,
+
+      host: studio?.host || {
+        name: user.name,
+        email: user.email,
+      },
+    };
+
+    try {
+      setIsSubmitting(true);
+
+      const response = await fetch(
+        studio
+          ? `http://localhost:5000/studios/${studio._id}`
+          : "http://localhost:5000/studios",
+        {
+          method: studio ? "PATCH" : "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...data,
+            email: user.email,
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Something went wrong.");
+      }
+
+      if (studio && result.matchedCount === 0) {
+        throw new Error("Studio not found or update failed.");
+      }
+
+      if (studio) {
+        const updatedStudio: ExistingStudio = {
+          ...studio,
+          ...data,
+          updatedAt: new Date().toISOString(),
+        };
+
+        onSuccess?.(updatedStudio);
+        toast.success("Studio updated successfully!");
+      } else {
+        toast.success("Studio added successfully!");
+        console.log("Saved Studio:", result);
+      }
+    } catch (error) {
+      console.error(error);
+
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong!"
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="mx-auto w-full max-w-5xl">
       {/* Page heading */}
       <div className="mb-8">
-        <Link
-          href="/studios"
-          className="mb-5 inline-flex items-center gap-2 text-sm text-muted-foreground transition hover:text-[#d6a75c]"
-        >
-          <ArrowLeft size={16} />
-          Back to Studios
-        </Link>
+        {!studio && (
+          <Link
+            href="/studios"
+            className="mb-5 inline-flex items-center gap-2 text-sm text-muted-foreground transition hover:text-[#d6a75c]"
+          >
+            <ArrowLeft size={16} />
+            Back to Studios
+          </Link>
+        )}
 
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>
             <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#d6a75c]/20 bg-[#d6a75c]/10 px-3 py-1.5 text-xs font-semibold text-[#d6a75c]">
               <Sparkles size={14} />
-              SHARE YOUR CREATIVE SPACE
+              {studio ? "UPDATE YOUR CREATIVE SPACE" : "SHARE YOUR CREATIVE SPACE"}
             </div>
 
             <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-              Add a New Studio
+              {studio ? "Edit Studio" : "Add a New Studio"}
             </h1>
 
             <p className="mt-3 max-w-2xl text-sm leading-7 text-muted-foreground sm:text-base">
-              List your creative space and connect with creators looking
-              for the perfect place to bring their ideas to life.
+              {studio
+                ? "Update your studio information and keep your listing accurate."
+                : "List your creative space and connect with creators looking for the perfect place to bring their ideas to life."}
             </p>
           </div>
 
@@ -406,7 +523,7 @@ export default function AddStudioForm() {
             <div className="relative">
               <ImagePlus
                 size={18}
-                className="absolute top-1/2 left-4 -translate-y-1/2 text-muted-foreground"
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground"
               />
               <input
                 required
@@ -487,9 +604,7 @@ export default function AddStudioForm() {
             </div>
 
             <div>
-              <label className={labelClass}>
-                Security Deposit ($)
-              </label>
+              <label className={labelClass}>Security Deposit ($)</label>
               <input
                 type="number"
                 min="0"
@@ -787,8 +902,7 @@ export default function AddStudioForm() {
               </span>
               <span className="mt-1 block text-xs leading-5 text-muted-foreground">
                 Allow creators to book your studio without waiting for
-                manual host approval. This preference will be saved with
-                your listing.
+                manual host approval.
               </span>
             </span>
           </label>
@@ -813,7 +927,7 @@ export default function AddStudioForm() {
                 <label className={labelClass}>Host Name</label>
                 <input
                   readOnly
-                  value={user.name || ""}
+                  value={studio?.host?.name || user.name || ""}
                   className={`${inputClass} cursor-not-allowed opacity-70`}
                 />
               </div>
@@ -822,7 +936,7 @@ export default function AddStudioForm() {
                 <label className={labelClass}>Host Email</label>
                 <input
                   readOnly
-                  value={user.email || ""}
+                  value={studio?.host?.email || user.email || ""}
                   className={`${inputClass} cursor-not-allowed opacity-70`}
                 />
               </div>
@@ -830,8 +944,7 @@ export default function AddStudioForm() {
           ) : (
             <div className="rounded-xl border border-[#d6a75c]/20 bg-[#d6a75c]/5 p-4">
               <p className="text-sm text-foreground">
-                Please log in to add a studio. Your host information
-                will be added automatically.
+                Please log in to add a studio.
               </p>
               <Link
                 href="/login"
@@ -850,19 +963,36 @@ export default function AddStudioForm() {
           </p>
 
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Link
-              href="/studios"
-              className="inline-flex h-12 items-center justify-center rounded-xl border border-border px-6 text-sm font-semibold text-foreground transition hover:bg-muted"
-            >
-              Cancel
-            </Link>
+            {studio ? (
+              <button
+                type="button"
+                onClick={onCancel}
+                disabled={isSubmitting}
+                className="inline-flex h-12 items-center justify-center rounded-xl border border-border px-6 text-sm font-semibold text-foreground transition hover:bg-muted disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            ) : (
+              <Link
+                href="/studios"
+                className="inline-flex h-12 items-center justify-center rounded-xl border border-border px-6 text-sm font-semibold text-foreground transition hover:bg-muted"
+              >
+                Cancel
+              </Link>
+            )}
 
             <button
               type="submit"
               disabled={isPending || !user || isSubmitting}
               className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#d6a75c] px-7 text-sm font-bold text-neutral-950 transition hover:bg-[#e7bd7b] disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {isSubmitting ? "Saving Studio..." : "Add Studio"}
+              {isSubmitting
+                ? studio
+                  ? "Updating Studio..."
+                  : "Saving Studio..."
+                : studio
+                  ? "Save Changes"
+                  : "Add Studio"}
               <ArrowRight size={17} />
             </button>
           </div>

@@ -1,10 +1,9 @@
+
 "use client";
 
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-// import { toast } from "sonner";
-import BookingModal from "./BookingModal";
 import {
     MapPin,
     Star,
@@ -17,10 +16,7 @@ import {
     ChevronLeft,
     ChevronRight,
     Heart,
-    //   Camera,
     Wifi,
-    //   Car,
-    //   Music,
     Info,
 } from "lucide-react";
 
@@ -62,22 +58,48 @@ interface StudioDetailsProps {
     studio: Studio;
 }
 
+// Check whether an image source is a valid URL or local path
+const isValidImageUrl = (value: unknown): value is string => {
+    if (typeof value !== "string" || !value.trim()) {
+        return false;
+    }
+
+    const imageUrl = value.trim();
+
+    // Allow local images from public folder
+    if (imageUrl.startsWith("/") && !imageUrl.startsWith("//")) {
+        return true;
+    }
+
+    // Allow valid HTTP and HTTPS URLs
+    try {
+        const url = new URL(imageUrl);
+
+        return (
+            (url.protocol === "https:" || url.protocol === "http:") &&
+            Boolean(url.hostname)
+        );
+    } catch {
+        return false;
+    }
+};
+
 export default function StudioDetails({ studio }: StudioDetailsProps) {
+    // Only use valid image URLs
     const images = [
         studio.imageUrl,
-        ...(studio.galleryImages || []),
-    ].filter(Boolean);
-    const [isBookingOpen, setIsBookingOpen] = useState(false);
-    const [activeImage, setActiveImage] = useState(0);
-    const [bookingDate, setBookingDate] = useState("");
-    const [startTime, setStartTime] = useState("");
-    const [duration, setDuration] = useState(
-        studio.minBookingHours || 1
-    );
-    const [wishlist, setWishlist] = useState(false);
-    
+        ...(Array.isArray(studio.galleryImages)
+            ? studio.galleryImages
+            : []),
+    ]
+        .filter(isValidImageUrl)
+        .map((image) => image.trim());
 
-    const totalPrice = duration * studio.hourlyRate;
+    const [activeImage, setActiveImage] = useState(0);
+    const [wishlist, setWishlist] = useState(false);
+
+    const totalPrice =
+        (studio.minBookingHours || 1) * (studio.hourlyRate || 0);
 
     const nextImage = () => {
         setActiveImage((prev) => (prev + 1) % images.length);
@@ -88,15 +110,6 @@ export default function StudioDetails({ studio }: StudioDetailsProps) {
             (prev) => (prev - 1 + images.length) % images.length
         );
     };
-
-    // const handleBooking = () => {
-    //     if (!bookingDate || !startTime) {
-    //         toast.error("Please select your booking date and start time.");
-    //         return;
-    //     }
-
-    //     toast.info("Booking functionality will be available soon.");
-    // };
 
     const formatCategory = (category: string) =>
         category
@@ -117,7 +130,9 @@ export default function StudioDetails({ studio }: StudioDetailsProps) {
                         <ArrowLeft size={16} />
                         Explore Studios
                     </Link>
+
                     <span className="text-muted-foreground">/</span>
+
                     <span className="truncate text-foreground">
                         {studio.title}
                     </span>
@@ -152,6 +167,7 @@ export default function StudioDetails({ studio }: StudioDetailsProps) {
 
                     <button
                         onClick={() => setWishlist(!wishlist)}
+                        aria-label="Save studio to wishlist"
                         className="flex w-fit items-center gap-2 rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-foreground transition hover:bg-muted"
                     >
                         <Heart
@@ -169,6 +185,8 @@ export default function StudioDetails({ studio }: StudioDetailsProps) {
                 {/* Image Gallery */}
                 <section className="mb-10">
                     <div className="grid gap-3 lg:grid-cols-4">
+
+                        {/* Main Image */}
                         <div className="relative h-70 overflow-hidden rounded-2xl bg-muted sm:h-100 lg:col-span-3">
                             {images.length > 0 && (
                                 <>
@@ -202,17 +220,26 @@ export default function StudioDetails({ studio }: StudioDetailsProps) {
                                     )}
                                 </>
                             )}
+
+                            {images.length === 0 && (
+                                <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                                    No studio image available
+                                </div>
+                            )}
                         </div>
 
+                        {/* Thumbnail Images */}
                         <div className="grid grid-cols-3 gap-3 lg:grid-cols-1">
                             {images.slice(0, 3).map((image, index) => (
                                 <button
                                     key={`${image}-${index}`}
                                     onClick={() => setActiveImage(index)}
-                                    className={`relative h-24 overflow-hidden rounded-xl bg-muted sm:h-32 lg:h-31.5 ${activeImage === index
-                                        ? "ring-2 ring-primary ring-offset-2 ring-offset-background"
-                                        : ""
-                                        }`}
+                                    aria-label={`View studio image ${index + 1}`}
+                                    className={`relative h-24 overflow-hidden rounded-xl bg-muted sm:h-32 lg:h-31.5 ${
+                                        activeImage === index
+                                            ? "ring-2 ring-primary ring-offset-2 ring-offset-background"
+                                            : ""
+                                    }`}
                                 >
                                     <Image
                                         src={image}
@@ -251,11 +278,16 @@ export default function StudioDetails({ studio }: StudioDetailsProps) {
 
                             {studio.location?.address && (
                                 <div className="mt-5 flex items-start gap-3 rounded-xl border border-border bg-card p-4">
-                                    <MapPin className="mt-0.5 text-primary" size={20} />
+                                    <MapPin
+                                        className="mt-0.5 text-primary"
+                                        size={20}
+                                    />
+
                                     <div>
                                         <h3 className="text-sm font-semibold text-foreground">
                                             Studio Location
                                         </h3>
+
                                         <p className="mt-1 text-sm text-muted-foreground">
                                             {studio.location.address},{" "}
                                             {studio.location.area},{" "}
@@ -277,74 +309,87 @@ export default function StudioDetails({ studio }: StudioDetailsProps) {
                                     </h2>
 
                                     <div className="grid gap-3 sm:grid-cols-2">
-                                        {studio.spaceHighlights.map((item, index) => (
-                                            <div
-                                                key={index}
-                                                className="flex items-center gap-3 rounded-xl border border-border bg-card p-4"
-                                            >
-                                                <CheckCircle2
-                                                    size={19}
-                                                    className="shrink-0 text-primary"
-                                                />
-                                                <span className="text-sm text-foreground">
-                                                    {item}
-                                                </span>
-                                            </div>
-                                        ))}
+                                        {studio.spaceHighlights.map(
+                                            (item, index) => (
+                                                <div
+                                                    key={index}
+                                                    className="flex items-center gap-3 rounded-xl border border-border bg-card p-4"
+                                                >
+                                                    <CheckCircle2
+                                                        size={19}
+                                                        className="shrink-0 text-primary"
+                                                    />
+
+                                                    <span className="text-sm text-foreground">
+                                                        {item}
+                                                    </span>
+                                                </div>
+                                            )
+                                        )}
                                     </div>
                                 </section>
                             )}
 
                         {/* Amenities */}
-                        {studio.amenities && studio.amenities.length > 0 && (
-                            <>
-                                <div className="border-t border-border" />
+                        {studio.amenities &&
+                            studio.amenities.length > 0 && (
+                                <>
+                                    <div className="border-t border-border" />
 
-                                <section>
-                                    <h2 className="mb-4 text-xl font-bold text-foreground">
-                                        Amenities & Facilities
-                                    </h2>
+                                    <section>
+                                        <h2 className="mb-4 text-xl font-bold text-foreground">
+                                            Amenities & Facilities
+                                        </h2>
 
-                                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                                        {studio.amenities.map((item, index) => (
-                                            <div
-                                                key={index}
-                                                className="flex items-center gap-3 rounded-xl border border-border bg-card p-3"
-                                            >
-                                                <Wifi size={18} className="shrink-0 text-primary" />
-                                                <span className="text-sm text-foreground">
-                                                    {item}
-                                                </span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </section>
-                            </>
-                        )}
+                                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                                            {studio.amenities.map(
+                                                (item, index) => (
+                                                    <div
+                                                        key={index}
+                                                        className="flex items-center gap-3 rounded-xl border border-border bg-card p-3"
+                                                    >
+                                                        <Wifi
+                                                            size={18}
+                                                            className="shrink-0 text-primary"
+                                                        />
+
+                                                        <span className="text-sm text-foreground">
+                                                            {item}
+                                                        </span>
+                                                    </div>
+                                                )
+                                            )}
+                                        </div>
+                                    </section>
+                                </>
+                            )}
 
                         {/* Equipment */}
-                        {studio.equipment && studio.equipment.length > 0 && (
-                            <>
-                                <div className="border-t border-border" />
+                        {studio.equipment &&
+                            studio.equipment.length > 0 && (
+                                <>
+                                    <div className="border-t border-border" />
 
-                                <section>
-                                    <h2 className="mb-4 text-xl font-bold text-foreground">
-                                        Available Equipment
-                                    </h2>
+                                    <section>
+                                        <h2 className="mb-4 text-xl font-bold text-foreground">
+                                            Available Equipment
+                                        </h2>
 
-                                    <div className="flex flex-wrap gap-2">
-                                        {studio.equipment.map((item, index) => (
-                                            <span
-                                                key={index}
-                                                className="rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground"
-                                            >
-                                                {item}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </section>
-                            </>
-                        )}
+                                        <div className="flex flex-wrap gap-2">
+                                            {studio.equipment.map(
+                                                (item, index) => (
+                                                    <span
+                                                        key={index}
+                                                        className="rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground"
+                                                    >
+                                                        {item}
+                                                    </span>
+                                                )
+                                            )}
+                                        </div>
+                                    </section>
+                                </>
+                            )}
 
                         <div className="border-t border-border" />
 
@@ -356,7 +401,11 @@ export default function StudioDetails({ studio }: StudioDetailsProps) {
 
                             <div className="rounded-xl border border-border bg-card p-5">
                                 <div className="mb-4 flex items-center gap-3">
-                                    <CalendarDays className="text-primary" size={21} />
+                                    <CalendarDays
+                                        className="text-primary"
+                                        size={21}
+                                    />
+
                                     <span className="font-semibold text-foreground">
                                         Available Days
                                     </span>
@@ -374,11 +423,16 @@ export default function StudioDetails({ studio }: StudioDetailsProps) {
                                 </div>
 
                                 <div className="flex items-center gap-3 border-t border-border pt-4">
-                                    <Clock className="text-primary" size={21} />
+                                    <Clock
+                                        className="text-primary"
+                                        size={21}
+                                    />
+
                                     <div>
                                         <p className="text-xs text-muted-foreground">
                                             Opening Hours
                                         </p>
+
                                         <p className="mt-1 text-sm font-semibold text-foreground">
                                             {studio.availability?.openingTime || "Not specified"}
                                             {" – "}
@@ -390,7 +444,8 @@ export default function StudioDetails({ studio }: StudioDetailsProps) {
                         </section>
 
                         {/* Studio Rules */}
-                        {(studio.studioRules || studio.cancellationPolicy) && (
+                        {(studio.studioRules ||
+                            studio.cancellationPolicy) && (
                             <>
                                 <div className="border-t border-border" />
 
@@ -403,9 +458,13 @@ export default function StudioDetails({ studio }: StudioDetailsProps) {
                                         {studio.studioRules && (
                                             <div className="rounded-xl border border-border bg-card p-5">
                                                 <h3 className="mb-2 flex items-center gap-2 font-semibold text-foreground">
-                                                    <ShieldCheck size={19} className="text-primary" />
+                                                    <ShieldCheck
+                                                        size={19}
+                                                        className="text-primary"
+                                                    />
                                                     Studio Rules
                                                 </h3>
+
                                                 <p className="whitespace-pre-line text-sm leading-6 text-muted-foreground">
                                                     {studio.studioRules}
                                                 </p>
@@ -415,9 +474,13 @@ export default function StudioDetails({ studio }: StudioDetailsProps) {
                                         {studio.cancellationPolicy && (
                                             <div className="rounded-xl border border-border bg-card p-5">
                                                 <h3 className="mb-2 flex items-center gap-2 font-semibold text-foreground">
-                                                    <Info size={19} className="text-primary" />
+                                                    <Info
+                                                        size={19}
+                                                        className="text-primary"
+                                                    />
                                                     Cancellation Policy
                                                 </h3>
+
                                                 <p className="whitespace-pre-line text-sm leading-6 text-muted-foreground">
                                                     {studio.cancellationPolicy}
                                                 </p>
@@ -445,9 +508,11 @@ export default function StudioDetails({ studio }: StudioDetailsProps) {
                                     <h3 className="font-semibold text-foreground">
                                         {studio.host?.name || "Studio Host"}
                                     </h3>
+
                                     <p className="mt-1 text-sm text-muted-foreground">
                                         Studio Host
                                     </p>
+
                                     {studio.host?.email && (
                                         <p className="mt-1 text-xs text-muted-foreground">
                                             {studio.host.email}
@@ -467,8 +532,10 @@ export default function StudioDetails({ studio }: StudioDetailsProps) {
                                     <p className="text-sm text-muted-foreground">
                                         Starting from
                                     </p>
+
                                     <h2 className="mt-1 text-3xl font-bold text-foreground">
                                         ৳{studio.hourlyRate?.toLocaleString("en-BD")}
+
                                         <span className="text-sm font-normal text-muted-foreground">
                                             {" "}/ hour
                                         </span>
@@ -484,63 +551,24 @@ export default function StudioDetails({ studio }: StudioDetailsProps) {
 
                             <div className="space-y-4">
 
-                                {/* Date */}
+                                {/* Minimum Booking Duration */}
                                 <div>
-                                    <label className="mb-2 block text-sm font-medium text-foreground">
-                                        Booking Date
-                                    </label>
-                                    <input
-                                        type="date"
-                                        min={new Date().toISOString().split("T")[0]}
-                                        value={bookingDate}
-                                        onChange={(e) => setBookingDate(e.target.value)}
-                                        className="w-full rounded-xl border border-border bg-background px-3 py-3 text-sm text-foreground outline-none focus:border-primary"
-                                    />
-                                </div>
+                                    <p className="text-sm font-medium text-foreground">
+                                        Minimum Booking Duration
+                                    </p>
 
-                                {/* Start Time */}
-                                <div>
-                                    <label className="mb-2 block text-sm font-medium text-foreground">
-                                        Start Time
-                                    </label>
-                                    <input
-                                        type="time"
-                                        value={startTime}
-                                        onChange={(e) => setStartTime(e.target.value)}
-                                        className="w-full rounded-xl border border-border bg-background px-3 py-3 text-sm text-foreground outline-none focus:border-primary"
-                                    />
-                                </div>
-
-                                {/* Duration */}
-                                <div>
-                                    <label className="mb-2 block text-sm font-medium text-foreground">
-                                        Booking Duration (Hours)
-                                    </label>
-                                    <input
-                                        type="number"
-                                        min={studio.minBookingHours || 1}
-                                        value={duration}
-                                        onChange={(e) =>
-                                            setDuration(
-                                                Math.max(
-                                                    studio.minBookingHours || 1,
-                                                    Number(e.target.value)
-                                                )
-                                            )
-                                        }
-                                        className="w-full rounded-xl border border-border bg-background px-3 py-3 text-sm text-foreground outline-none focus:border-primary"
-                                    />
-
-                                    <p className="mt-1 text-xs text-muted-foreground">
-                                        Minimum {studio.minBookingHours || 1} hour(s)
+                                    <p className="mt-1 text-sm text-muted-foreground">
+                                        {studio.minBookingHours || 1} hour(s)
                                     </p>
                                 </div>
 
+                                {/* Price Summary */}
                                 <div className="border-t border-border pt-4">
                                     <div className="flex justify-between text-sm">
                                         <span className="text-muted-foreground">
-                                            ৳{studio.hourlyRate?.toLocaleString("en-BD")} × {duration} hours
+                                            Minimum booking cost
                                         </span>
+
                                         <span className="font-medium text-foreground">
                                             ৳{totalPrice.toLocaleString("en-BD")}
                                         </span>
@@ -550,6 +578,7 @@ export default function StudioDetails({ studio }: StudioDetailsProps) {
                                         <span className="text-muted-foreground">
                                             Security Deposit
                                         </span>
+
                                         <span className="font-medium text-foreground">
                                             ৳{studio.securityDeposit?.toLocaleString("en-BD")}
                                         </span>
@@ -559,8 +588,12 @@ export default function StudioDetails({ studio }: StudioDetailsProps) {
                                         <span className="font-semibold text-foreground">
                                             Estimated Total
                                         </span>
+
                                         <span className="text-xl font-bold text-primary">
-                                            ৳{(totalPrice + studio.securityDeposit).toLocaleString("en-BD")}
+                                            ৳{(
+                                                totalPrice +
+                                                (studio.securityDeposit || 0)
+                                            ).toLocaleString("en-BD")}
                                         </span>
                                     </div>
 
@@ -569,6 +602,7 @@ export default function StudioDetails({ studio }: StudioDetailsProps) {
                                     </p>
                                 </div>
 
+                                {/* Booking Button */}
                                 <Link
                                     href={`/booking/${studio._id}`}
                                     className="block w-full rounded-xl bg-primary px-5 py-3.5 text-center font-semibold text-primary-foreground transition hover:opacity-90"
@@ -584,14 +618,22 @@ export default function StudioDetails({ studio }: StudioDetailsProps) {
                             {/* Quick Information */}
                             <div className="mt-6 space-y-4 border-t border-border pt-5">
                                 <div className="flex items-center gap-3">
-                                    <Users size={19} className="text-primary" />
+                                    <Users
+                                        size={19}
+                                        className="text-primary"
+                                    />
+
                                     <span className="text-sm text-muted-foreground">
                                         Maximum {studio.maxCapacity} people
                                     </span>
                                 </div>
 
                                 <div className="flex items-center gap-3">
-                                    <ShieldCheck size={19} className="text-primary" />
+                                    <ShieldCheck
+                                        size={19}
+                                        className="text-primary"
+                                    />
+
                                     <span className="text-sm text-muted-foreground">
                                         Security deposit ৳
                                         {studio.securityDeposit?.toLocaleString("en-BD")}
@@ -599,7 +641,11 @@ export default function StudioDetails({ studio }: StudioDetailsProps) {
                                 </div>
 
                                 <div className="flex items-center gap-3">
-                                    <Clock size={19} className="text-primary" />
+                                    <Clock
+                                        size={19}
+                                        className="text-primary"
+                                    />
+
                                     <span className="text-sm text-muted-foreground">
                                         Minimum {studio.minBookingHours || 1} hour booking
                                     </span>
@@ -609,12 +655,6 @@ export default function StudioDetails({ studio }: StudioDetailsProps) {
                     </aside>
                 </div>
             </div>
-
-            <BookingModal
-                studio={studio}
-                isOpen={isBookingOpen}
-                onClose={() => setIsBookingOpen(false)}
-            />
         </div>
     );
 }

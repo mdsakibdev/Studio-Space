@@ -178,7 +178,7 @@ export default function ExploreStudios() {
         <div className="mb-7 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>
             <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary">
-              ✨ Full Marketplace Catalog
+              Full Marketplace Catalog
             </span>
 
             <h1 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
@@ -245,11 +245,10 @@ export default function ExploreStudios() {
                 <button
                   key={category.value}
                   onClick={() => setSelectedCategory(category.value)}
-                  className={`rounded-full px-4 py-2 text-xs font-semibold transition ${
-                    selectedCategory === category.value
+                  className={`rounded-full px-4 py-2 text-xs font-semibold transition ${selectedCategory === category.value
                       ? "bg-primary text-primary-foreground shadow-sm"
                       : "bg-muted text-foreground hover:bg-primary/10"
-                  }`}
+                    }`}
                 >
                   {category.label}
                 </button>
