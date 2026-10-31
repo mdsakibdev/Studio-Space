@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+
+import { useEffect, useState } from "react";
 import { X, Sparkles, Clock } from "lucide-react";
 import { toast } from "sonner";
 
@@ -54,12 +55,19 @@ export default function BookingModal({
   const totalCost = shootingCost + studio.securityDeposit;
 
   // Local date
-  const today = new Date();
-  const minDate = [
-    today.getFullYear(),
-    String(today.getMonth() + 1).padStart(2, "0"),
-    String(today.getDate()).padStart(2, "0"),
-  ].join("-");
+  const [minDate, setMinDate] = useState("");
+
+  useEffect(() => {
+    const today = new Date();
+
+    const formattedDate = [
+      today.getFullYear(),
+      String(today.getMonth() + 1).padStart(2, "0"),
+      String(today.getDate()).padStart(2, "0"),
+    ].join("-");
+
+    setMinDate(formattedDate);
+  }, []);
 
   // Handle Booking
   const handleBooking = () => {

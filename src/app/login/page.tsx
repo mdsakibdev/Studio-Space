@@ -60,7 +60,15 @@ export default function LoginPage() {
       if (data) {
         toast.success("Login successful!");
 
-        router.replace("/");
+        const searchParams = new URLSearchParams(window.location.search);
+        const callbackURL = searchParams.get("callbackURL");
+
+        const safeURL =
+          callbackURL?.startsWith("/") && !callbackURL.startsWith("//")
+            ? callbackURL
+            : "/";
+
+        router.replace(safeURL);
         router.refresh();
       }
     } catch (error) {

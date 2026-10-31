@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { toast } from "sonner";
+// import { toast } from "sonner";
 import BookingModal from "./BookingModal";
 import {
     MapPin,
@@ -75,6 +75,7 @@ export default function StudioDetails({ studio }: StudioDetailsProps) {
         studio.minBookingHours || 1
     );
     const [wishlist, setWishlist] = useState(false);
+    
 
     const totalPrice = duration * studio.hourlyRate;
 
@@ -88,14 +89,14 @@ export default function StudioDetails({ studio }: StudioDetailsProps) {
         );
     };
 
-    const handleBooking = () => {
-        if (!bookingDate || !startTime) {
-            toast.error("Please select your booking date and start time.");
-            return;
-        }
+    // const handleBooking = () => {
+    //     if (!bookingDate || !startTime) {
+    //         toast.error("Please select your booking date and start time.");
+    //         return;
+    //     }
 
-        toast.info("Booking functionality will be available soon.");
-    };
+    //     toast.info("Booking functionality will be available soon.");
+    // };
 
     const formatCategory = (category: string) =>
         category
@@ -568,12 +569,12 @@ export default function StudioDetails({ studio }: StudioDetailsProps) {
                                     </p>
                                 </div>
 
-                                <button
-                                    onClick={() => setIsBookingOpen(true)}
-                                    className="w-full rounded-xl bg-primary px-5 py-3.5 font-semibold text-white transition hover:opacity-90"
+                                <Link
+                                    href={`/booking/${studio._id}`}
+                                    className="block w-full rounded-xl bg-primary px-5 py-3.5 text-center font-semibold text-primary-foreground transition hover:opacity-90"
                                 >
                                     Book Workspace Now
-                                </button>
+                                </Link>
 
                                 <p className="text-center text-xs text-muted-foreground">
                                     You wont be charged at this stage.
