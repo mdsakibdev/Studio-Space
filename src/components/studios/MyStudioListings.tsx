@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -45,7 +44,7 @@ export default function MyStudioListings() {
     if (isPending) return;
 
     if (!email) {
-      setLoading(false);
+    //   setLoading(false);
       return;
     }
 

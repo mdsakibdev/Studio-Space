@@ -51,7 +51,7 @@ export default function MyBookings() {
     if (isPending) return;
 
     if (!email) {
-      setLoading(false);
+    //   setLoading(false);
       return;
     }
 

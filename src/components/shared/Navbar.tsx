@@ -15,7 +15,6 @@ import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 
 import {
-  Aperture,
   Menu,
   X,
   ArrowUpRight,
@@ -501,7 +500,7 @@ export default function Navbar() {
                 onClick={closeMenus}
                 className="flex items-center justify-center gap-1 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:opacity-90"
               >
-                Get Started
+                Register
                 <ArrowUpRight size={15} />
               </Link>
             </div>

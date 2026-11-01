@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import {  useState } from "react";
 import { X, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
@@ -31,24 +31,22 @@ export default function BookingModal({
   const [endTime, setEndTime] = useState("");
   const [crewCount, setCrewCount] = useState("4");
   const [gearNotes, setGearNotes] = useState("");
-  const [minDate, setMinDate] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
+  
 
   const { data: session } = authClient.useSession();
 
   // Get today's local date
-  useEffect(() => {
-    const today = new Date();
+const [minDate] = useState(() => {
+  const today = new Date();
 
-    const formattedDate = [
-      today.getFullYear(),
-      String(today.getMonth() + 1).padStart(2, "0"),
-      String(today.getDate()).padStart(2, "0"),
-    ].join("-");
-
-    setMinDate(formattedDate);
-  }, []);
+  return [
+    today.getFullYear(),
+    String(today.getMonth() + 1).padStart(2, "0"),
+    String(today.getDate()).padStart(2, "0"),
+  ].join("-");
+});
 
   // Calculate shooting hours
   const getShootHours = () => {
@@ -158,7 +156,7 @@ export default function BookingModal({
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/70 px-4 py-6 backdrop-blur-sm"
+      className="fixed inset-0 z-100 flex items-center justify-center overflow-y-auto bg-black/70 px-4 py-6 backdrop-blur-sm"
       onClick={onClose}
     >
       <div

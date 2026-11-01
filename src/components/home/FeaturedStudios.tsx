@@ -161,7 +161,7 @@ export default function FeaturedStudios() {
                     {(studio.rating || 0).toFixed(1)}
                   </div>
 
-                  <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/60 to-transparent" />
+                  <div className="absolute inset-x-0 bottom-0 h-20 bg-linear-to-t from-black/60 to-transparent" />
 
                   <div className="absolute bottom-3 left-3 text-lg font-bold text-white">
                     ${studio.hourlyRate.toLocaleString("en-US")}

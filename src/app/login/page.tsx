@@ -12,6 +12,7 @@ import {
   LockKeyhole,
   Mail,
   ArrowRight,
+  Globe,
 } from "lucide-react";
 
 import { toast } from "sonner";
@@ -79,6 +80,14 @@ export default function LoginPage() {
       setIsLoading(false);
     }
   };
+
+  const handleGoogleSignUp = async () =>{
+   const data = await authClient.signIn.social({
+    provider: "google",
+  });
+
+  console.log(data)
+}
 
   return (
     <section className="min-h-[calc(100vh-76px)] bg-background px-4 py-12 sm:px-6 sm:py-16">
@@ -239,6 +248,15 @@ export default function LoginPage() {
                   </>
                 )}
               </button>
+
+              <button
+                            type="button"
+                            onClick={handleGoogleSignUp}
+                            className="flex h-11 w-full items-center justify-center gap-3 rounded-xl border border-border bg-background text-sm font-medium text-foreground transition hover:bg-surface-hover"
+                          >
+                            <Globe size={18} />
+                            Continue with Google
+                          </button>
             </form>
 
             {/* Register Link */}

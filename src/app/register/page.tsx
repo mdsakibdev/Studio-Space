@@ -108,6 +108,14 @@ export default function RegisterPage() {
   }
 };
 
+const handleGoogleSignUp = async () =>{
+   const data = await authClient.signIn.social({
+    provider: "google",
+  });
+
+  console.log(data)
+}
+
   return (
     <section className="min-h-[calc(100vh-76px)] bg-background px-4 py-10 sm:px-6 sm:py-14">
       <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2">
@@ -354,7 +362,7 @@ export default function RegisterPage() {
 
             <button
               type="button"
-              onClick={() => toast.info("Google sign up will be available soon.")}
+              onClick={handleGoogleSignUp}
               className="flex h-11 w-full items-center justify-center gap-3 rounded-xl border border-border bg-background text-sm font-medium text-foreground transition hover:bg-surface-hover"
             >
               <Globe size={18} />
