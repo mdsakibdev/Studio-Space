@@ -1,45 +1,47 @@
+
 import { notFound } from "next/navigation";
 import StudioDetails from "@/components/studios/StudioDetails";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
 
 interface StudioDetailsPageProps {
   params: Promise<{ id: string }>;
 }
 
-export default async function StudioDetailsPage({params,}: StudioDetailsPageProps) {
+export default async function StudioDetailsPage({
+  params,
+}: StudioDetailsPageProps) {
   const { id } = await params;
 
-  const jwtToken = await auth.api.getToken({
-    headers: await headers(),
-  })
-  console.log("JWT Token:", jwtToken?.token);
-  const token = jwtToken?.token;
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-  let studio = null;
+  if (!API_URL) {
+    console.error("NEXT_PUBLIC_API_URL is not configured.");
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center px-4">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-foreground">
+            Configuration Error
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            API URL is not configured. Please check your environment variables.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  let response: Response;
 
   try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/studios/${id}`,
+    const baseUrl = API_URL.replace(/\/+$/, "");
+
+    response = await fetch(
+      `${baseUrl}/studios/${encodeURIComponent(id)}`,
       {
-        headers: {
-          authorization: `Bearer ${token}`,
-        }
-      },
-      
+        cache: "no-store",
+      }
     );
-
-    if (response.status === 404) {
-      notFound();
-    }
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch studio");
-    }
-
-    studio = await response.json();
   } catch (error) {
-    console.error("Studio details error:", error);
+    console.error("Studio API connection error:", error);
 
     return (
       <div className="flex min-h-[60vh] items-center justify-center px-4">
@@ -54,6 +56,33 @@ export default async function StudioDetailsPage({params,}: StudioDetailsPageProp
       </div>
     );
   }
+
+  if (response.status === 404) {
+    notFound();
+  }
+
+  if (!response.ok) {
+    console.error(
+      "Studio API failed:",
+      response.status,
+      response.statusText
+    );
+
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center px-4">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-foreground">
+            Unable to Load Studio
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Something went wrong while loading this studio. Please try again.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const studio = await response.json();
 
   if (!studio) {
     notFound();
