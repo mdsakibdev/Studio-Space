@@ -56,7 +56,7 @@ useEffect(() => {
       }
 
       const response = await fetch(
-        "http://localhost:5000/my-studios",
+        `${process.env.NEXT_PUBLIC_API_URL}/my-studios`,
         {
           headers: {
             Authorization: `Bearer ${tokenData.token}`,
@@ -152,7 +152,7 @@ const handleDelete = async (studio: Studio) => {
     const token = tokenData.token;
 
     const response = await fetch(
-      `http://localhost:5000/studios/${studio._id}`,
+      `${process.env.NEXT_PUBLIC_API_URL}/studios/${studio._id}`,
       {
         method: "DELETE",
         headers: {

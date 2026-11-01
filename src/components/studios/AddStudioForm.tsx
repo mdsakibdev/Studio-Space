@@ -355,8 +355,8 @@ export default function AddStudioForm({
 
       const response = await fetch(
         studio
-          ? `http://localhost:5000/studios/${studio._id}`
-          : "http://localhost:5000/studios",
+          ? `${process.env.NEXT_PUBLIC_API_URL}/studios/${studio._id}`
+          : `${process.env.NEXT_PUBLIC_API_URL}/studios`,
         {
           method: studio ? "PATCH" : "POST",
           headers: {

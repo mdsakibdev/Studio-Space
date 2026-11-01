@@ -20,7 +20,7 @@ export default async function StudioDetailsPage({params,}: StudioDetailsPageProp
 
   try {
     const response = await fetch(
-      `http://localhost:5000/studios/${id}`,
+      `${process.env.NEXT_PUBLIC_API_URL}/studios/${id}`,
       {
         headers: {
           authorization: `Bearer ${token}`,

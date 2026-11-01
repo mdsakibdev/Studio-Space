@@ -45,7 +45,7 @@ export default function FeaturedStudios() {
         setError("");
 
         const response = await fetch(
-          "http://localhost:5000/studios/featured"
+          `${process.env.NEXT_PUBLIC_API_URL}/studios/featured`
         );
 
         if (!response.ok) {

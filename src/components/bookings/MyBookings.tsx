@@ -64,7 +64,7 @@ useEffect(() => {
       }
 
       const response = await fetch(
-        "http://localhost:5000/bookings",
+        `${process.env.NEXT_PUBLIC_API_URL}/bookings`,
         {
           headers: {
             Authorization: `Bearer ${tokenData.token}`,
@@ -110,7 +110,7 @@ const handleCancelBooking = async (bookingId: string) => {
     }
 
     const response = await fetch(
-      `http://localhost:5000/bookings/${bookingId}/cancel`,
+      `${process.env.NEXT_PUBLIC_API_URL}/bookings/${bookingId}/cancel`,
       {
         method: "PATCH",
         headers: {
