@@ -4,6 +4,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
+import StudioLogo from "@/components/shared/StudioLogo";
 import {
   useState,
   useSyncExternalStore,
@@ -313,21 +314,11 @@ export default function Navbar() {
       <nav className="mx-auto flex h-19 max-w-360 items-center justify-between px-5 sm:px-8 lg:px-12">
 
         {/* StudioSpace Logo */}
-        <Link
-          href="/"
-          onClick={closeMenus}
-          className="flex shrink-0 items-center"
-          aria-label="StudioSpace Home"
-        >
-          <Image
-            src="/images/studiospace-logo.png"
-            alt="StudioSpace"
-            width={220}
-            height={80}
-            priority
-            className="h-12 w-auto object-contain sm:h-14"
-          />
+        <Link href="/" aria-label="StudioSpace Home">
+          <StudioLogo />
         </Link>
+
+
 
         {/* Desktop Navigation */}
         <div className="hidden items-center gap-8 lg:flex">
@@ -336,8 +327,8 @@ export default function Navbar() {
               key={link.name}
               href={link.href}
               className={`relative py-2 text-[13px] font-medium transition-colors duration-200 ${isActive(link.href)
-                  ? "text-primary"
-                  : "text-muted-foreground hover:text-foreground"
+                ? "text-primary"
+                : "text-muted-foreground hover:text-foreground"
                 }`}
             >
               {link.name}
@@ -459,8 +450,8 @@ export default function Navbar() {
       {/* Mobile Navigation */}
       <div
         className={`overflow-hidden border-t border-border bg-background transition-all duration-300 lg:hidden ${mobileMenuOpen
-            ? "max-h-175 overflow-y-auto opacity-100"
-            : "max-h-0 border-transparent opacity-0"
+          ? "max-h-175 overflow-y-auto opacity-100"
+          : "max-h-0 border-transparent opacity-0"
           }`}
       >
         <div className="space-y-1 px-5 py-5 sm:px-8">
@@ -472,8 +463,8 @@ export default function Navbar() {
               href={link.href}
               onClick={closeMenus}
               className={`flex items-center justify-between rounded-lg px-4 py-3 text-sm font-medium transition-colors ${isActive(link.href)
-                  ? "bg-accent text-accent-foreground"
-                  : "text-muted-foreground hover:bg-surface-hover hover:text-foreground"
+                ? "bg-accent text-accent-foreground"
+                : "text-muted-foreground hover:bg-surface-hover hover:text-foreground"
                 }`}
             >
               {link.name}

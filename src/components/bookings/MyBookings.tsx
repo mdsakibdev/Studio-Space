@@ -44,92 +44,110 @@ export default function MyBookings() {
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState("All");
 
-  const email = session?.user?.email;
+
 
   // Get user's bookings
-  useEffect(() => {
-    if (isPending) return;
+  // Fetch My Bookings
+useEffect(() => {
+  if (isPending || !session?.user) return;
 
-    if (!email) {
-    //   setLoading(false);
-      return;
-    }
-
-    const fetchBookings = async () => {
-      try {
-        setLoading(true);
-
-        const response = await fetch(
-          `http://localhost:5000/bookings?email=${encodeURIComponent(email)}`
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to load bookings");
-        }
-
-        const data = await response.json();
-        setBookings(data);
-      } catch (error) {
-        console.error(error);
-        toast.error("Could not load your bookings");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchBookings();
-  }, [email, isPending]);
-
-  // Cancel booking
-  const handleCancelBooking = async (bookingId: string) => {
-    const confirmed = window.confirm(
-      "Are you sure you want to cancel this booking?"
-    );
-
-    if (!confirmed) return;
-
+  const fetchBookings = async () => {
     try {
-      setCancellingId(bookingId);
+      setLoading(true);
+
+      // Get JWT Token
+      const { data: tokenData, error: tokenError } =
+        await authClient.token();
+
+      if (tokenError || !tokenData?.token) {
+        throw new Error("Authentication required. Please login again.");
+      }
 
       const response = await fetch(
-        `http://localhost:5000/bookings/${bookingId}/cancel`,
+        "http://localhost:5000/bookings",
         {
-          method: "PATCH",
           headers: {
-            "Content-Type": "application/json",
+            Authorization: `Bearer ${tokenData.token}`,
           },
-          body: JSON.stringify({ email }),
+          cache: "no-store",
         }
       );
 
-      const result = await response.json();
-
       if (!response.ok) {
-        throw new Error(result.message || "Failed to cancel booking");
+        throw new Error("Failed to load bookings");
       }
 
-      // Update booking status immediately
-      setBookings((previousBookings) =>
-        previousBookings.map((booking) =>
-          booking._id === bookingId
-            ? { ...booking, status: "Cancelled" }
-            : booking
-        )
-      );
-
-      toast.success("Booking cancelled successfully!");
+      const data = await response.json();
+      setBookings(data);
     } catch (error) {
       console.error(error);
-
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Could not cancel booking"
-      );
+      toast.error("Could not load your bookings");
     } finally {
-      setCancellingId(null);
+      setLoading(false);
     }
   };
+
+  fetchBookings();
+}, [session, isPending]);
+
+// Cancel Booking
+const handleCancelBooking = async (bookingId: string) => {
+  const confirmed = window.confirm(
+    "Are you sure you want to cancel this booking?"
+  );
+
+  if (!confirmed) return;
+
+  try {
+    setCancellingId(bookingId);
+
+    // Get JWT Token
+    const { data: tokenData, error: tokenError } =
+      await authClient.token();
+
+    if (tokenError || !tokenData?.token) {
+      throw new Error("Authentication required. Please login again.");
+    }
+
+    const response = await fetch(
+      `http://localhost:5000/bookings/${bookingId}/cancel`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${tokenData.token}`,
+        },
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.message || "Failed to cancel booking");
+    }
+
+    // Update booking status immediately
+    setBookings((previousBookings) =>
+      previousBookings.map((booking) =>
+        booking._id === bookingId
+          ? { ...booking, status: "Cancelled" }
+          : booking
+      )
+    );
+
+    toast.success("Booking cancelled successfully!");
+  } catch (error) {
+    console.error(error);
+
+    toast.error(
+      error instanceof Error
+        ? error.message
+        : "Could not cancel booking"
+    );
+  } finally {
+    setCancellingId(null);
+  }
+};
 
   // Filter bookings
   const filteredBookings =

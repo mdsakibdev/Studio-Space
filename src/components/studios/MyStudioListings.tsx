@@ -37,176 +37,198 @@ export default function MyStudioListings() {
   const [editingStudio, setEditingStudio] = useState<Studio | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const email = session?.user?.email;
+  // const email = session?.user?.email;
 
-  // Fetch My Studios
-  useEffect(() => {
-    if (isPending) return;
+ // Fetch My Studios
+useEffect(() => {
+  if (isPending || !session?.user) return;
 
-    if (!email) {
-    //   setLoading(false);
-      return;
-    }
+  const fetchMyStudios = async () => {
+    try {
+      setLoading(true);
 
-    const fetchMyStudios = async () => {
-      try {
-        setLoading(true);
+      // Get JWT Token
+      const { data: tokenData, error: tokenError } =
+        await authClient.token();
 
-        const response = await fetch(
-          `http://localhost:5000/my-studios?email=${encodeURIComponent(email)}`
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to load studios");
-        }
-
-        const data: Studio[] = await response.json();
-        setStudios(data);
-      } catch (error) {
-        console.error(error);
-        toast.error("Could not load your studio listings");
-      } finally {
-        setLoading(false);
+      if (tokenError || !tokenData?.token) {
+        throw new Error("Authentication required. Please login again.");
       }
-    };
 
-    fetchMyStudios();
-  }, [email, isPending]);
+      const response = await fetch(
+        "http://localhost:5000/my-studios",
+        {
+          headers: {
+            Authorization: `Bearer ${tokenData.token}`,
+          },
+          cache: "no-store",
+        }
+      );
 
-  // Category names
-  const categories = useMemo(
-    () => [
-      "All",
-      ...new Set(studios.map((studio) => studio.category)),
-    ],
-    [studios]
-  );
+      if (!response.ok) {
+        throw new Error("Failed to load studios");
+      }
 
-  // Filter Studios
-  const filteredStudios = studios.filter((studio) => {
-    const searchText = search.toLowerCase();
+      const data: Studio[] = await response.json();
+      setStudios(data);
+    } catch (error) {
+      console.error(error);
+      toast.error("Could not load your studio listings");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const matchesSearch =
-      studio.title?.toLowerCase().includes(searchText) ||
-      studio.location?.city?.toLowerCase().includes(searchText) ||
-      studio.location?.area?.toLowerCase().includes(searchText);
+  fetchMyStudios();
+},  [session, isPending]);
 
-    const matchesCategory =
-      categoryFilter === "All" ||
-      studio.category === categoryFilter;
+// Category names
+const categories = useMemo(
+  () => [
+    "All",
+    ...new Set(studios.map((studio) => studio.category)),
+  ],
+  [studios]
+);
 
-    const matchesStatus =
-      statusFilter === "All" ||
-      (studio.status || "Active").toLowerCase() ===
-        statusFilter.toLowerCase();
+// Filter Studios
+const filteredStudios = studios.filter((studio) => {
+  const searchText = search.toLowerCase();
 
-    return matchesSearch && matchesCategory && matchesStatus;
-  });
+  const matchesSearch =
+    studio.title?.toLowerCase().includes(searchText) ||
+    studio.location?.city?.toLowerCase().includes(searchText) ||
+    studio.location?.area?.toLowerCase().includes(searchText);
 
-  // Edit Studio
- const handleEdit = (studio: Studio) => {
+  const matchesCategory =
+    categoryFilter === "All" ||
+    studio.category === categoryFilter;
+
+  const matchesStatus =
+    statusFilter === "All" ||
+    (studio.status || "Active").toLowerCase() ===
+      statusFilter.toLowerCase();
+
+  return matchesSearch && matchesCategory && matchesStatus;
+});
+
+// Edit Studio
+const handleEdit = (studio: Studio) => {
   router.push(`/studios/edit/${studio._id}`);
 };
 
-  // Update Listing After Successful Edit
-  const handleUpdateSuccess = (updatedStudio: Studio) => {
-    setStudios((previous) =>
-      previous.map((studio) =>
-        studio._id === updatedStudio._id
-          ? updatedStudio
-          : studio
-      )
-    );
+// Update Listing After Successful Edit
+const handleUpdateSuccess = (updatedStudio: Studio) => {
+  setStudios((previous) =>
+    previous.map((studio) =>
+      studio._id === updatedStudio._id
+        ? updatedStudio
+        : studio
+    )
+  );
 
-    setEditingStudio(null);
-  };
+  setEditingStudio(null);
+};
 
-  // Delete Studio
-  const handleDelete = async (studio: Studio) => {
-    const confirmed = window.confirm(
-      `Are you sure you want to delete "${studio.title}"?`
-    );
+// Delete Studio
+const handleDelete = async (studio: Studio) => {
+  const confirmed = window.confirm(
+    `Are you sure you want to delete "${studio.title}"?`
+  );
 
-    if (!confirmed) return;
+  if (!confirmed) return;
 
-    try {
-      setDeletingId(studio._id);
+  try {
+    setDeletingId(studio._id);
 
-      const response = await fetch(
-        `http://localhost:5000/studios/${studio._id}`,
-        {
-          method: "DELETE",
-        }
-      );
+    // Get JWT Token
+    const { data: tokenData, error: tokenError } =
+      await authClient.token();
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || "Failed to delete studio");
-      }
-
-      if (result.deletedCount === 0) {
-        throw new Error("Studio not found");
-      }
-
-      setStudios((previous) =>
-        previous.filter((item) => item._id !== studio._id)
-      );
-
-      toast.success("Studio deleted successfully!");
-    } catch (error) {
-      console.error(error);
-
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to delete studio"
-      );
-    } finally {
-      setDeletingId(null);
+    if (tokenError || !tokenData?.token) {
+      throw new Error("Authentication required. Please login again.");
     }
-  };
 
-  // Loading
-  if (isPending || loading) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
+    const token = tokenData.token;
+
+    const response = await fetch(
+      `http://localhost:5000/studios/${studio._id}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
     );
-  }
 
-  // Login Required
-  if (!session?.user) {
-    return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">
-        <Building2 className="mb-4 h-12 w-12 text-primary" />
+    const result = await response.json();
 
-        <h2 className="text-2xl font-bold text-foreground">
-          Login Required
-        </h2>
+    if (!response.ok) {
+      throw new Error(result.message || "Failed to delete studio");
+    }
 
-        <p className="mt-2 text-muted-foreground">
-          Please login to manage your studio listings.
-        </p>
+    if (result.deletedCount === 0) {
+      throw new Error("Studio not found");
+    }
 
-        <Link
-          href="/login"
-          className="mt-6 rounded-lg bg-primary px-6 py-3 font-semibold text-primary-foreground"
-        >
-          Login Now
-        </Link>
-      </div>
+    setStudios((previous) =>
+      previous.filter((item) => item._id !== studio._id)
     );
+
+    toast.success("Studio deleted successfully!");
+  } catch (error) {
+    console.error(error);
+
+    toast.error(
+      error instanceof Error
+        ? error.message
+        : "Failed to delete studio"
+    );
+  } finally {
+    setDeletingId(null);
   }
+};
 
-  const activeStudios = studios.filter(
-    (studio) => (studio.status || "Active").toLowerCase() === "active"
-  ).length;
+// Loading
+if (isPending || loading) {
+  return (
+    <div className="flex min-h-[60vh] items-center justify-center">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    </div>
+  );
+}
 
-  const inactiveStudios = studios.filter(
-    (studio) => (studio.status || "Active").toLowerCase() !== "active"
-  ).length;
+// Login Required
+if (!session?.user) {
+  return (
+    <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">
+      <Building2 className="mb-4 h-12 w-12 text-primary" />
+
+      <h2 className="text-2xl font-bold text-foreground">
+        Login Required
+      </h2>
+
+      <p className="mt-2 text-muted-foreground">
+        Please login to manage your studio listings.
+      </p>
+
+      <Link
+        href="/login"
+        className="mt-6 rounded-lg bg-primary px-6 py-3 font-semibold text-primary-foreground"
+      >
+        Login Now
+      </Link>
+    </div>
+  );
+}
+
+const activeStudios = studios.filter(
+  (studio) => (studio.status || "Active").toLowerCase() === "active"
+).length;
+
+const inactiveStudios = studios.filter(
+  (studio) => (studio.status || "Active").toLowerCase() !== "active"
+).length;
 
   return (
     <>

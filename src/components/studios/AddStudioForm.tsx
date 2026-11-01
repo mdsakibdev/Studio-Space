@@ -343,6 +343,16 @@ export default function AddStudioForm({
     try {
       setIsSubmitting(true);
 
+      // Get JWT Token
+      const { data: tokenData, error: tokenError } =
+        await authClient.token();
+
+      if (tokenError || !tokenData?.token) {
+        throw new Error("Authentication required. Please login again.");
+      }
+
+      const token = tokenData.token;
+
       const response = await fetch(
         studio
           ? `http://localhost:5000/studios/${studio._id}`
@@ -351,6 +361,7 @@ export default function AddStudioForm({
           method: studio ? "PATCH" : "POST",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
             ...data,
@@ -707,8 +718,8 @@ export default function AddStudioForm({
                 <label
                   key={amenity}
                   className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3.5 text-sm transition ${selected
-                      ? "border-[#d6a75c]/50 bg-[#d6a75c]/10 text-foreground"
-                      : "border-border bg-background text-muted-foreground hover:border-[#d6a75c]/40"
+                    ? "border-[#d6a75c]/50 bg-[#d6a75c]/10 text-foreground"
+                    : "border-border bg-background text-muted-foreground hover:border-[#d6a75c]/40"
                     }`}
                 >
                   <input
@@ -721,8 +732,8 @@ export default function AddStudioForm({
                   />
                   <span
                     className={`flex h-5 w-5 items-center justify-center rounded-md border ${selected
-                        ? "border-[#d6a75c] bg-[#d6a75c] text-neutral-950"
-                        : "border-border"
+                      ? "border-[#d6a75c] bg-[#d6a75c] text-neutral-950"
+                      : "border-border"
                       }`}
                   >
                     {selected && <Check size={13} />}
@@ -751,8 +762,8 @@ export default function AddStudioForm({
                 <label
                   key={item}
                   className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3.5 text-sm transition ${selected
-                      ? "border-[#d6a75c]/50 bg-[#d6a75c]/10 text-foreground"
-                      : "border-border bg-background text-muted-foreground hover:border-[#d6a75c]/40"
+                    ? "border-[#d6a75c]/50 bg-[#d6a75c]/10 text-foreground"
+                    : "border-border bg-background text-muted-foreground hover:border-[#d6a75c]/40"
                     }`}
                 >
                   <input
@@ -765,8 +776,8 @@ export default function AddStudioForm({
                   />
                   <span
                     className={`flex h-5 w-5 items-center justify-center rounded-md border ${selected
-                        ? "border-[#d6a75c] bg-[#d6a75c] text-neutral-950"
-                        : "border-border"
+                      ? "border-[#d6a75c] bg-[#d6a75c] text-neutral-950"
+                      : "border-border"
                       }`}
                   >
                     {selected && <Check size={13} />}
@@ -797,8 +808,8 @@ export default function AddStudioForm({
                   <label
                     key={day}
                     className={`flex cursor-pointer items-center gap-2 rounded-xl border p-3 text-sm transition ${selected
-                        ? "border-[#d6a75c]/50 bg-[#d6a75c]/10 text-foreground"
-                        : "border-border bg-background text-muted-foreground"
+                      ? "border-[#d6a75c]/50 bg-[#d6a75c]/10 text-foreground"
+                      : "border-border bg-background text-muted-foreground"
                       }`}
                   >
                     <input

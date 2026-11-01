@@ -2,6 +2,15 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
+import { Poppins } from "next/font/google";
+
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-poppins",
+  display: "swap",
+});
+
 import Navbar from "@/components/shared/Navbar";
 import ThemeProvider from "@/components/shared/ThemeProvider";
 import { Toaster } from "sonner";
@@ -25,7 +34,7 @@ export default function RootLayout({
     <html lang="en"
   suppressHydrationWarning
   data-scroll-behavior="smooth">
-      <body>
+      <body className={`${poppins.variable} font-sans`}>
         <ThemeProvider>
           <Navbar />
 

@@ -100,55 +100,66 @@ const [minDate] = useState(() => {
     }
 
     try {
-      setIsSubmitting(true);
+  setIsSubmitting(true);
 
-      const response = await fetch("http://localhost:5000/bookings", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          studioId: studio._id,
-          user: {
-            name: session.user.name,
-            email: session.user.email,
-          },
-          shootDate,
-          startTime,
-          endTime,
-          shootHours,
-          crewCount: Number(crewCount),
-          gearNotes,
-          hourlyRate: studio.hourlyRate,
-          shootingCost,
-          securityDeposit: studio.securityDeposit,
-          totalCost,
-        }),
-      });
+  // Get JWT Token
+  const { data: tokenData, error: tokenError } =
+    await authClient.token();
 
-      const result = await response.json();
+  if (tokenError || !tokenData?.token) {
+    throw new Error("Authentication required. Please login again.");
+  }
 
-      if (!response.ok) {
-        throw new Error(result.message || "Booking failed.");
-      }
+  const token = tokenData.token;
 
-      toast.success("Booking request submitted successfully!");
+  const response = await fetch("http://localhost:5000/bookings", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      studioId: studio._id,
+      user: {
+        name: session.user.name,
+        email: session.user.email,
+      },
+      shootDate,
+      startTime,
+      endTime,
+      shootHours,
+      crewCount: Number(crewCount),
+      gearNotes,
+      hourlyRate: studio.hourlyRate,
+      shootingCost,
+      securityDeposit: studio.securityDeposit,
+      totalCost,
+    }),
+  });
 
-      console.log("Booking Result:", result);
+  const result = await response.json();
 
-      router.push("/my-bookings");
+  if (!response.ok) {
+    throw new Error(result.message || "Booking failed.");
+  }
 
-    } catch (error) {
-      console.error("Booking Error:", error);
+  toast.success("Booking request submitted successfully!");
 
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to submit booking. Please try again."
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
+  console.log("Booking Result:", result);
+
+  router.push("/my-bookings");
+
+} catch (error) {
+  console.error("Booking Error:", error);
+
+  toast.error(
+    error instanceof Error
+      ? error.message
+      : "Failed to submit booking. Please try again."
+  );
+} finally {
+  setIsSubmitting(false);
+}
   };
 
   // Close modal if not open

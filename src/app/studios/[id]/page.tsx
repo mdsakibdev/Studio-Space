@@ -1,14 +1,20 @@
 import { notFound } from "next/navigation";
 import StudioDetails from "@/components/studios/StudioDetails";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 
 interface StudioDetailsPageProps {
   params: Promise<{ id: string }>;
 }
 
-export default async function StudioDetailsPage({
-  params,
-}: StudioDetailsPageProps) {
+export default async function StudioDetailsPage({params,}: StudioDetailsPageProps) {
   const { id } = await params;
+
+  const jwtToken = await auth.api.getToken({
+    headers: await headers(),
+  })
+  console.log("JWT Token:", jwtToken?.token);
+  const token = jwtToken?.token;
 
   let studio = null;
 
@@ -16,8 +22,11 @@ export default async function StudioDetailsPage({
     const response = await fetch(
       `http://localhost:5000/studios/${id}`,
       {
-        cache: "no-store",
-      }
+        headers: {
+          authorization: `Bearer ${token}`,
+        }
+      },
+      
     );
 
     if (response.status === 404) {
