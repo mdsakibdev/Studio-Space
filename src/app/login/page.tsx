@@ -17,6 +17,7 @@ import {
 
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
+import StudioLogo from "@/components/shared/StudioLogo";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -96,13 +97,8 @@ export default function LoginPage() {
         {/* Left Side - Welcome Content */}
         <div className="hidden lg:block">
           <div className="mb-6 flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-              <Aperture size={27} />
-            </div>
-
-            <span className="text-2xl font-bold tracking-tight">
-              StudioSpace
-            </span>
+              <StudioLogo/>
+            
           </div>
 
           <p className="mb-4 text-sm font-semibold uppercase tracking-[0.25em] text-primary">
@@ -187,7 +183,7 @@ export default function LoginPage() {
                   </label>
 
                   <Link
-                    href="/forgot-password"
+                    href="/login"
                     className="text-xs font-medium text-primary transition hover:underline"
                   >
                     Forgot password?

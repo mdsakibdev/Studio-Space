@@ -18,6 +18,7 @@ import { useRouter } from "next/navigation";
 
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
+import StudioLogo from "@/components/shared/StudioLogo";
 
 
 export default function RegisterPage() {
@@ -123,13 +124,10 @@ const handleGoogleSignUp = async () =>{
         {/* Left Side - Welcome Content */}
         <div className="hidden lg:block">
           <div className="mb-6 flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-              <Aperture size={27} />
-            </div>
+            <StudioLogo/>
+            
 
-            <span className="text-2xl font-bold tracking-tight">
-              StudioSpace
-            </span>
+            
           </div>
 
           <p className="mb-4 text-sm font-semibold uppercase tracking-[0.25em] text-primary">
