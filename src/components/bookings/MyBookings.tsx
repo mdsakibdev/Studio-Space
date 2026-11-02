@@ -6,7 +6,7 @@ import {
   CalendarDays,
   Clock,
   Users,
-  MapPin,
+  Banknote,
   XCircle,
   Loader2,
   ExternalLink,
@@ -14,6 +14,12 @@ import {
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 
+// shadcn UI Components
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+
+// বুকিং ডেটার টাইপ ডেফিনিশন
 interface Booking {
   _id: string;
   studioId: string;
@@ -28,13 +34,8 @@ interface Booking {
   status: string;
 }
 
-const filters = [
-  "All",
-  "Pending",
-  "Confirmed",
-  "Completed",
-  "Cancelled",
-];
+// ফিল্টার অপশনসমূহ
+const filters = ["All", "Pending", "Confirmed", "Completed", "Cancelled"];
 
 export default function MyBookings() {
   const { data: session, isPending } = authClient.useSession();
@@ -44,134 +45,113 @@ export default function MyBookings() {
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState("All");
 
+  // ১. বুকিং ডেটা লোড করার ইফেক্ট
+  useEffect(() => {
+    if (isPending || !session?.user) return;
 
+    const fetchBookings = async () => {
+      try {
+        setLoading(true);
+        const { data: tokenData, error: tokenError } = await authClient.token();
 
-  // Get user's bookings
-  // Fetch My Bookings
-useEffect(() => {
-  if (isPending || !session?.user) return;
+        if (tokenError || !tokenData?.token) {
+          throw new Error("Authentication required. Please login again.");
+        }
 
-  const fetchBookings = async () => {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/bookings`,
+          {
+            headers: {
+              Authorization: `Bearer ${tokenData.token}`,
+            },
+            cache: "no-store",
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to load bookings");
+        }
+
+        const data = await response.json();
+        setBookings(data);
+      } catch (error) {
+        console.error("Fetch bookings error:", error);
+        toast.error("Could not load your bookings");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBookings();
+  }, [session, isPending]);
+
+  // ২. বুকিং ক্যানসেল করার ফাংশন
+  const handleCancelBooking = async (bookingId: string) => {
+    const isSure = window.confirm(
+      "Are you sure you want to cancel this booking?"
+    );
+
+    if (!isSure) return;
+
     try {
-      setLoading(true);
-
-      // Get JWT Token
-      const { data: tokenData, error: tokenError } =
-        await authClient.token();
+      setCancellingId(bookingId);
+      const { data: tokenData, error: tokenError } = await authClient.token();
 
       if (tokenError || !tokenData?.token) {
         throw new Error("Authentication required. Please login again.");
       }
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/bookings`,
+        `${process.env.NEXT_PUBLIC_API_URL}/bookings/${bookingId}/cancel`,
         {
+          method: "PATCH",
           headers: {
+            "Content-Type": "application/json",
             Authorization: `Bearer ${tokenData.token}`,
           },
-          cache: "no-store",
         }
       );
 
+      const result = await response.json();
+
       if (!response.ok) {
-        throw new Error("Failed to load bookings");
+        throw new Error(result.message || "Failed to cancel booking");
       }
 
-      const data = await response.json();
-      setBookings(data);
+      // ক্যানসেল সফল হলে স্টেট আপডেট করা
+      setBookings((prev) =>
+        prev.map((item) =>
+          item._id === bookingId ? { ...item, status: "Cancelled" } : item
+        )
+      );
+
+      toast.success("Booking cancelled successfully!");
     } catch (error) {
-      console.error(error);
-      toast.error("Could not load your bookings");
+      console.error("Cancel booking error:", error);
+      const message =
+        error instanceof Error ? error.message : "Could not cancel booking";
+      toast.error(message);
     } finally {
-      setLoading(false);
+      setCancellingId(null);
     }
   };
 
-  fetchBookings();
-}, [session, isPending]);
+  // ৩. সিলেক্ট করা ফিল্টার অনুযায়ী ডেটা ফিল্টারিং
+  const filteredBookings = bookings.filter((booking) => {
+    if (activeFilter === "All") return true;
+    return booking.status?.toLowerCase() === activeFilter.toLowerCase();
+  });
 
-// Cancel Booking
-const handleCancelBooking = async (bookingId: string) => {
-  const confirmed = window.confirm(
-    "Are you sure you want to cancel this booking?"
-  );
-
-  if (!confirmed) return;
-
-  try {
-    setCancellingId(bookingId);
-
-    // Get JWT Token
-    const { data: tokenData, error: tokenError } =
-      await authClient.token();
-
-    if (tokenError || !tokenData?.token) {
-      throw new Error("Authentication required. Please login again.");
-    }
-
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/bookings/${bookingId}/cancel`,
-      {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${tokenData.token}`,
-        },
-      }
-    );
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.message || "Failed to cancel booking");
-    }
-
-    // Update booking status immediately
-    setBookings((previousBookings) =>
-      previousBookings.map((booking) =>
-        booking._id === bookingId
-          ? { ...booking, status: "Cancelled" }
-          : booking
-      )
-    );
-
-    toast.success("Booking cancelled successfully!");
-  } catch (error) {
-    console.error(error);
-
-    toast.error(
-      error instanceof Error
-        ? error.message
-        : "Could not cancel booking"
-    );
-  } finally {
-    setCancellingId(null);
-  }
-};
-
-  // Filter bookings
-  const filteredBookings =
-    activeFilter === "All"
-      ? bookings
-      : bookings.filter(
-          (booking) =>
-            booking.status?.toLowerCase() === activeFilter.toLowerCase()
-        );
-
-  const getStatusStyle = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case "confirmed":
-        return "bg-green-500/10 text-green-500";
-      case "completed":
-        return "bg-blue-500/10 text-blue-500";
-      case "cancelled":
-        return "bg-red-500/10 text-red-500";
-      default:
-        return "bg-amber-500/10 text-amber-500";
-    }
+  // ৪. স্ট্যাটাস অনুযায়ী shadcn Badge-এর স্টাইল দেওয়া
+  const getBadgeVariant = (status: string) => {
+    const current = status?.toLowerCase();
+    if (current === "confirmed") return "default";
+    if (current === "completed") return "secondary";
+    if (current === "cancelled") return "destructive";
+    return "outline";
   };
 
-  // Loading
+  // ৫. লোডার স্টেট
   if (isPending || loading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
@@ -180,23 +160,18 @@ const handleCancelBooking = async (bookingId: string) => {
     );
   }
 
-  // Login required
+  // ৬. আন-অথেন্টিকেটেড স্টেট
   if (!session?.user) {
     return (
       <div className="mx-auto flex min-h-[60vh] max-w-xl flex-col items-center justify-center px-4 text-center">
         <CalendarDays className="mb-4 h-12 w-12 text-primary" />
-
-        <h2 className="text-2xl font-bold text-foreground">
-          Login Required
-        </h2>
-
+        <h2 className="text-2xl font-bold text-foreground">Login Required</h2>
         <p className="mt-2 text-muted-foreground">
           Please login to see your bookings.
         </p>
-
         <Link
           href="/login"
-          className="mt-6 rounded-lg bg-primary px-6 py-3 font-semibold text-primary-foreground transition hover:opacity-90"
+          className="mt-6 inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90"
         >
           Login Now
         </Link>
@@ -211,124 +186,106 @@ const handleCancelBooking = async (bookingId: string) => {
         <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-primary">
           Your Activities
         </p>
-
         <h1 className="text-3xl font-bold text-foreground sm:text-4xl">
           My Bookings
         </h1>
-
         <p className="mt-2 text-muted-foreground">
           Manage and track all your studio bookings.
         </p>
       </div>
 
-      {/* Summary Cards */}
+      {/* Summary Cards with shadcn Card */}
       <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
         {[
+          { title: "Total Bookings", count: bookings.length },
           {
-            label: "Total Bookings",
-            value: bookings.length,
+            title: "Pending",
+            count: bookings.filter((b) => b.status === "Pending").length,
           },
           {
-            label: "Pending",
-            value: bookings.filter((b) => b.status === "Pending").length,
+            title: "Confirmed",
+            count: bookings.filter((b) => b.status === "Confirmed").length,
           },
           {
-            label: "Confirmed",
-            value: bookings.filter((b) => b.status === "Confirmed").length,
+            title: "Cancelled",
+            count: bookings.filter((b) => b.status === "Cancelled").length,
           },
-          {
-            label: "Cancelled",
-            value: bookings.filter((b) => b.status === "Cancelled").length,
-          },
-        ].map((item) => (
-          <div
-            key={item.label}
-            className="rounded-xl border border-border bg-card p-4 sm:p-5"
-          >
-            <p className="text-sm text-muted-foreground">{item.label}</p>
-            <h3 className="mt-2 text-2xl font-bold text-foreground">
-              {item.value}
-            </h3>
-          </div>
+        ].map((stat, idx) => (
+          <Card key={idx}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                {stat.title}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stat.count}</div>
+            </CardContent>
+          </Card>
         ))}
       </div>
 
-      {/* Filters */}
+      {/* Filter Buttons using shadcn Button */}
       <div className="mb-6 flex flex-wrap gap-2">
         {filters.map((filter) => (
-          <button
+          <Button
             key={filter}
+            variant={activeFilter === filter ? "default" : "outline"}
+            size="sm"
             onClick={() => setActiveFilter(filter)}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-              activeFilter === filter
-                ? "bg-primary text-primary-foreground"
-                : "border border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground"
-            }`}
+            className="rounded-full"
           >
             {filter}
-          </button>
+          </Button>
         ))}
       </div>
 
       {/* Booking List */}
       {filteredBookings.length === 0 ? (
-        <div className="rounded-2xl border border-border bg-card px-5 py-16 text-center">
-          <CalendarDays className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-
-          <h2 className="text-xl font-semibold text-foreground">
-            No Bookings Found
-          </h2>
-
-          <p className="mt-2 text-muted-foreground">
-            {activeFilter === "All"
-              ? "You have not booked any studio yet."
-              : `You do not have any ${activeFilter.toLowerCase()} bookings.`}
-          </p>
-
-          <Link
-            href="/studios"
-            className="mt-6 inline-flex rounded-lg bg-primary px-6 py-3 font-semibold text-primary-foreground transition hover:opacity-90"
-          >
-            Explore Studios
-          </Link>
-        </div>
+        <Card className="px-5 py-16 text-center">
+          <CardContent className="flex flex-col items-center">
+            <CalendarDays className="mb-4 h-12 w-12 text-muted-foreground" />
+            <h2 className="text-xl font-semibold text-foreground">
+              No Bookings Found
+            </h2>
+            <p className="mt-2 text-muted-foreground">
+              {activeFilter === "All"
+                ? "You have not booked any studio yet."
+                : `You do not have any ${activeFilter.toLowerCase()} bookings.`}
+            </p>
+            <Link
+              href="/studios"
+              className="mt-6 inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90"
+            >
+              Explore Studios
+            </Link>
+          </CardContent>
+        </Card>
       ) : (
         <div className="space-y-5">
           {filteredBookings.map((booking) => (
-            <div
-              key={booking._id}
-              className="overflow-hidden rounded-2xl border border-border bg-card"
-            >
-              <div className="flex flex-col gap-4 p-5 sm:p-6">
-                {/* Booking Header */}
+            <Card key={booking._id} className="overflow-hidden">
+              <CardContent className="p-5 sm:p-6">
+                {/* Header */}
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs text-muted-foreground">
                       Booking ID: {booking._id}
                     </p>
-
                     <h2 className="mt-1 text-xl font-bold text-foreground">
                       {booking.studioTitle || "Studio Booking"}
                     </h2>
                   </div>
-
-                  <span
-                    className={`rounded-full px-3 py-1.5 text-xs font-semibold ${getStatusStyle(
-                      booking.status
-                    )}`}
-                  >
+                  <Badge variant={getBadgeVariant(booking.status)}>
                     {booking.status || "Pending"}
-                  </span>
+                  </Badge>
                 </div>
 
-                {/* Booking Information */}
-                <div className="grid grid-cols-1 gap-4 border-y border-border py-5 sm:grid-cols-2 lg:grid-cols-4">
+                {/* Info Grid */}
+                <div className="my-5 grid grid-cols-1 gap-4 border-y border-border py-4 sm:grid-cols-2 lg:grid-cols-4">
                   <div className="flex items-center gap-3">
                     <CalendarDays className="h-5 w-5 text-primary" />
                     <div>
-                      <p className="text-xs text-muted-foreground">
-                        Shoot Date
-                      </p>
+                      <p className="text-xs text-muted-foreground">Shoot Date</p>
                       <p className="font-medium text-foreground">
                         {new Date(
                           booking.shootDate + "T00:00:00"
@@ -340,9 +297,7 @@ const handleCancelBooking = async (bookingId: string) => {
                   <div className="flex items-center gap-3">
                     <Clock className="h-5 w-5 text-primary" />
                     <div>
-                      <p className="text-xs text-muted-foreground">
-                        Time
-                      </p>
+                      <p className="text-xs text-muted-foreground">Time</p>
                       <p className="font-medium text-foreground">
                         {booking.startTime} - {booking.endTime}
                       </p>
@@ -362,11 +317,9 @@ const handleCancelBooking = async (bookingId: string) => {
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <MapPin className="h-5 w-5 text-primary" />
+                    <Banknote className="h-5 w-5 text-primary" />
                     <div>
-                      <p className="text-xs text-muted-foreground">
-                        Total Cost
-                      </p>
+                      <p className="text-xs text-muted-foreground">Total Cost</p>
                       <p className="font-bold text-primary">
                         ৳{Number(booking.totalCost || 0).toLocaleString()}
                       </p>
@@ -376,7 +329,7 @@ const handleCancelBooking = async (bookingId: string) => {
 
                 {/* Gear Notes */}
                 {booking.gearNotes && (
-                  <div>
+                  <div className="mb-4">
                     <p className="text-xs font-semibold text-muted-foreground">
                       Gear Notes
                     </p>
@@ -386,8 +339,8 @@ const handleCancelBooking = async (bookingId: string) => {
                   </div>
                 )}
 
-                {/* Actions */}
-                <div className="flex flex-wrap items-center justify-between gap-3">
+                {/* Footer Action Buttons */}
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
                   <Link
                     href={`/studios/${booking.studioId}`}
                     className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline"
@@ -398,25 +351,28 @@ const handleCancelBooking = async (bookingId: string) => {
 
                   {(booking.status === "Pending" ||
                     booking.status === "Confirmed") && (
-                    <button
-                      onClick={() => handleCancelBooking(booking._id)}
-                      disabled={cancellingId === booking._id}
-                      className="inline-flex items-center gap-2 rounded-lg border border-red-500/30 px-4 py-2.5 text-sm font-semibold text-red-500 transition hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      {cancellingId === booking._id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <XCircle className="h-4 w-4" />
-                      )}
-
-                      {cancellingId === booking._id
-                        ? "Cancelling..."
-                        : "Cancel Booking"}
-                    </button>
-                  )}
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleCancelBooking(booking._id)}
+                        disabled={cancellingId === booking._id}
+                      >
+                        {cancellingId === booking._id ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Cancelling...
+                          </>
+                        ) : (
+                          <>
+                            <XCircle className="mr-2 h-4 w-4" />
+                            Cancel Booking
+                          </>
+                        )}
+                      </Button>
+                    )}
                 </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}

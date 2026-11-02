@@ -1,11 +1,26 @@
 
 "use client";
 
-import {  useState } from "react";
-import { X, Clock } from "lucide-react";
-import { toast } from "sonner";
-import { authClient } from "@/lib/auth-client";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { CalendarDays, Clock, Users, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+
+import { authClient } from "@/lib/auth-client";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 
 interface Studio {
   _id: string;
@@ -26,27 +41,27 @@ export default function BookingModal({
   isOpen,
   onClose,
 }: BookingModalProps) {
+  const router = useRouter();
+
+  const { data: session } = authClient.useSession();
+
   const [shootDate, setShootDate] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [crewCount, setCrewCount] = useState("4");
   const [gearNotes, setGearNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const router = useRouter();
-  
 
-  const { data: session } = authClient.useSession();
+  // Today's local date
+  const [minDate] = useState(() => {
+    const today = new Date();
 
-  // Get today's local date
-const [minDate] = useState(() => {
-  const today = new Date();
-
-  return [
-    today.getFullYear(),
-    String(today.getMonth() + 1).padStart(2, "0"),
-    String(today.getDate()).padStart(2, "0"),
-  ].join("-");
-});
+    return [
+      today.getFullYear(),
+      String(today.getMonth() + 1).padStart(2, "0"),
+      String(today.getDate()).padStart(2, "0"),
+    ].join("-");
+  });
 
   // Calculate shooting hours
   const getShootHours = () => {
@@ -65,11 +80,15 @@ const [minDate] = useState(() => {
 
   const shootHours = getShootHours();
 
-  // Calculate price
+  // Calculate booking price
   const shootingCost = shootHours * studio.hourlyRate;
   const totalCost = shootingCost + studio.securityDeposit;
 
-  // Handle Booking
+  // Currency formatter
+  const formatPrice = (amount: number) =>
+    amount.toLocaleString("en-BD");
+
+  // Handle booking
   const handleBooking = async () => {
     if (!shootDate || !startTime || !endTime) {
       toast.error("Please complete all required booking fields.");
@@ -90,7 +109,9 @@ const [minDate] = useState(() => {
       Number(crewCount) < 1 ||
       Number(crewCount) > studio.maxCapacity
     ) {
-      toast.error(`Crew count must be between 1 and ${studio.maxCapacity}.`);
+      toast.error(
+        `Crew count must be between 1 and ${studio.maxCapacity}.`
+      );
       return;
     }
 
@@ -100,252 +121,256 @@ const [minDate] = useState(() => {
     }
 
     try {
-  setIsSubmitting(true);
+      setIsSubmitting(true);
 
-  // Get JWT Token
-  const { data: tokenData, error: tokenError } =
-    await authClient.token();
+      // Get JWT token
+      const { data: tokenData, error: tokenError } =
+        await authClient.token();
 
-  if (tokenError || !tokenData?.token) {
-    throw new Error("Authentication required. Please login again.");
-  }
+      if (tokenError || !tokenData?.token) {
+        throw new Error(
+          "Authentication required. Please login again."
+        );
+      }
 
-  const token = tokenData.token;
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/bookings`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${tokenData.token}`,
+          },
+          body: JSON.stringify({
+            studioId: studio._id,
+            shootDate,
+            startTime,
+            endTime,
+            shootHours,
+            crewCount: Number(crewCount),
+            gearNotes,
+            hourlyRate: studio.hourlyRate,
+            shootingCost,
+            securityDeposit: studio.securityDeposit,
+            totalCost,
+          }),
+        }
+      );
 
-  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/bookings`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      studioId: studio._id,
-      user: {
-        name: session.user.name,
-        email: session.user.email,
-      },
-      shootDate,
-      startTime,
-      endTime,
-      shootHours,
-      crewCount: Number(crewCount),
-      gearNotes,
-      hourlyRate: studio.hourlyRate,
-      shootingCost,
-      securityDeposit: studio.securityDeposit,
-      totalCost,
-    }),
-  });
+      const result = await response.json();
 
-  const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.message || "Booking failed.");
+      }
 
-  if (!response.ok) {
-    throw new Error(result.message || "Booking failed.");
-  }
+      toast.success("Booking request submitted successfully!");
 
-  toast.success("Booking request submitted successfully!");
+      onClose();
+      router.push("/my-bookings");
+      router.refresh();
 
-  console.log("Booking Result:", result);
+    } catch (error) {
+      console.error("Booking Error:", error);
 
-  router.push("/my-bookings");
-
-} catch (error) {
-  console.error("Booking Error:", error);
-
-  toast.error(
-    error instanceof Error
-      ? error.message
-      : "Failed to submit booking. Please try again."
-  );
-} finally {
-  setIsSubmitting(false);
-}
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to submit booking. Please try again."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  // Close modal if not open
-  if (!isOpen) return null;
-
   return (
-    <div
-      className="fixed inset-0 z-100 flex items-center justify-center overflow-y-auto bg-black/70 px-4 py-6 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <div
-        className="relative my-auto w-full max-w-lg rounded-2xl bg-white p-5 shadow-2xl sm:p-7"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Close Button */}
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute right-5 top-5 rounded-full p-1 text-gray-400 transition hover:bg-gray-100 hover:text-gray-800"
-          aria-label="Close booking modal"
-        >
-          <X size={20} />
-        </button>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto p-0 sm:max-w-xl">
 
-        {/* Heading */}
-        <div className="mb-5 pr-7">
-          <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-amber-600">
-            Reserve Creative Slot
-          </p>
+        {/* Header */}
+        <div className="border-b px-5 py-5 sm:px-7">
+          <DialogHeader className="space-y-2 pr-6 text-left">
+            <p className="text-xs font-bold uppercase tracking-widest text-amber-600">
+              Reserve Creative Slot
+            </p>
 
-          <h2 className="text-xl font-bold leading-tight text-gray-900 sm:text-2xl">
-            {studio.title}
-          </h2>
+            <DialogTitle className="text-xl font-bold sm:text-2xl">
+              {studio.title}
+            </DialogTitle>
 
-          <p className="mt-2 text-xs text-gray-500">
-            Rate: ৳{studio.hourlyRate.toLocaleString("en-BD")}/hr
-            {" • "}
-            Deposit: ৳
-            {studio.securityDeposit.toLocaleString("en-BD")}
-          </p>
+            <DialogDescription className="text-sm text-gray-500">
+              Rate: ৳{formatPrice(studio.hourlyRate)}/hr
+              {" • "}
+              Deposit: ৳{formatPrice(studio.securityDeposit)}
+            </DialogDescription>
+          </DialogHeader>
         </div>
 
-        {/* Booking Form */}
-        <div className="space-y-4">
+        {/* Form */}
+        <div className="space-y-5 px-5 py-5 sm:px-7">
 
           {/* Shoot Date */}
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-gray-700">
-              Shoot Date
-            </label>
+          <div className="space-y-2">
+            <Label htmlFor="shootDate">
+              Shoot Date <span className="text-red-500">*</span>
+            </Label>
 
-            <input
-              type="date"
-              value={shootDate}
-              min={minDate || undefined}
-              onChange={(e) => setShootDate(e.target.value)}
-              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-3 text-sm text-gray-800 outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-100"
-            />
+            <div className="relative">
+              <CalendarDays className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+
+              <Input
+                id="shootDate"
+                type="date"
+                min={minDate}
+                value={shootDate}
+                onChange={(e) => setShootDate(e.target.value)}
+                className="h-11 pl-10"
+              />
+            </div>
           </div>
 
-          {/* Start and End Time */}
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {/* Start & End Time */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 
-            {/* Start Time */}
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-gray-700">
-                Start Time
-              </label>
+            <div className="space-y-2">
+              <Label htmlFor="startTime">
+                Start Time <span className="text-red-500">*</span>
+              </Label>
 
               <div className="relative">
-                <input
+                <Input
+                  id="startTime"
                   type="time"
                   value={startTime}
                   onChange={(e) => setStartTime(e.target.value)}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-3 pr-10 text-sm text-gray-800 outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-100"
+                  className="h-11 pr-10"
                 />
 
-                <Clock
-                  size={16}
-                  className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
-                />
+                <Clock className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               </div>
             </div>
 
-            {/* End Time */}
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-gray-700">
-                End Time
-              </label>
+            <div className="space-y-2">
+              <Label htmlFor="endTime">
+                End Time <span className="text-red-500">*</span>
+              </Label>
 
               <div className="relative">
-                <input
+                <Input
+                  id="endTime"
                   type="time"
                   value={endTime}
                   onChange={(e) => setEndTime(e.target.value)}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-3 pr-10 text-sm text-gray-800 outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-100"
+                  className="h-11 pr-10"
                 />
 
-                <Clock
-                  size={16}
-                  className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
-                />
+                <Clock className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               </div>
             </div>
           </div>
 
           {/* Crew Count */}
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-gray-700">
-              Expected Crew / Talent Count (Max {studio.maxCapacity})
-            </label>
+          <div className="space-y-2">
+            <Label htmlFor="crewCount">
+              Expected Crew / Talent Count
+            </Label>
 
-            <input
-              type="number"
-              min={1}
-              max={studio.maxCapacity}
-              value={crewCount}
-              onChange={(e) => setCrewCount(e.target.value)}
-              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-3 text-sm text-gray-800 outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-100"
-            />
+            <div className="relative">
+              <Users className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+
+              <Input
+                id="crewCount"
+                type="number"
+                min={1}
+                max={studio.maxCapacity}
+                value={crewCount}
+                onChange={(e) => setCrewCount(e.target.value)}
+                className="h-11 pl-10"
+              />
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              Maximum capacity: {studio.maxCapacity} people
+            </p>
           </div>
 
           {/* Gear Notes */}
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-gray-700">
+          <div className="space-y-2">
+            <Label htmlFor="gearNotes">
               Production Requirements / Gear Notes
-              <span className="text-gray-400"> (Optional)</span>
-            </label>
+              <span className="ml-1 font-normal text-muted-foreground">
+                (Optional)
+              </span>
+            </Label>
 
-            <textarea
+            <Textarea
+              id="gearNotes"
               rows={3}
               value={gearNotes}
               onChange={(e) => setGearNotes(e.target.value)}
               placeholder="e.g. Bringing high-output lighting, smoke machine, heavy rigging..."
-              className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-3 py-3 text-sm text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-100"
+              className="resize-none"
             />
           </div>
 
           {/* Price Summary */}
-          <div className="space-y-3 rounded-xl bg-gray-100 p-4">
+          <div className="space-y-3 rounded-xl border bg-muted/40 p-4">
 
-            <div className="flex justify-between text-xs text-gray-600">
-              <span>
-                ৳{studio.hourlyRate.toLocaleString("en-BD")} ×{" "}
-                {shootHours} shoot hours
+            <div className="flex items-center justify-between gap-3 text-sm">
+              <span className="text-muted-foreground">
+                Shooting Cost ({shootHours} hours)
               </span>
 
-              <span>
-                ৳{shootingCost.toLocaleString("en-BD")}
-              </span>
-            </div>
-
-            <div className="flex justify-between text-xs text-gray-600">
-              <span>Refundable Security Deposit</span>
-
-              <span>
-                ৳{studio.securityDeposit.toLocaleString("en-BD")}
+              <span className="font-medium text-foreground">
+                ৳{formatPrice(shootingCost)}
               </span>
             </div>
 
-            <div className="flex justify-between border-t border-gray-300 pt-3">
-              <span className="text-sm font-bold text-gray-900">
+            <div className="flex items-center justify-between gap-3 text-sm">
+              <span className="text-muted-foreground">
+                Refundable Security Deposit
+              </span>
+
+              <span className="font-medium text-foreground">
+                ৳{formatPrice(studio.securityDeposit)}
+              </span>
+            </div>
+
+            <Separator />
+
+            <div className="flex items-center justify-between gap-3">
+              <span className="font-semibold text-foreground">
                 Total Estimated Cost
               </span>
 
-              <span className="text-base font-bold text-amber-600">
-                ৳{totalCost.toLocaleString("en-BD")}
+              <span className="text-lg font-bold text-amber-600">
+                ৳{formatPrice(totalCost)}
               </span>
             </div>
           </div>
 
-          {/* Confirm Button */}
-          <button
+          {/* Confirm Booking */}
+          <Button
             type="button"
             onClick={handleBooking}
             disabled={isSubmitting}
-            className="w-full rounded-xl bg-amber-600 px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="h-12 w-full bg-amber-600 text-sm font-semibold text-white hover:bg-amber-700"
           >
-            {isSubmitting ? "Submitting..." : "Confirm Booking"}
-          </button>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Submitting...
+              </>
+            ) : (
+              "Confirm Booking"
+            )}
+          </Button>
 
-          <p className="text-center text-[11px] text-gray-400">
+          <p className="text-center text-xs text-muted-foreground">
             Your booking request will be sent to the studio host.
           </p>
+
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

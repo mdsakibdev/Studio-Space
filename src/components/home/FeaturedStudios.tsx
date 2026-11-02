@@ -34,6 +34,7 @@ const categoryLabels: Record<string, string> = {
 };
 
 export default function FeaturedStudios() {
+  
   const [studios, setStudios] = useState<Studio[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");

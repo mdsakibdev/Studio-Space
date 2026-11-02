@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -21,7 +20,7 @@ import "swiper/css";
 import "swiper/css/effect-fade";
 import "swiper/css/pagination";
 
-// Static hero slide data
+// ১. একদম প্রিমিয়াম ও আকর্ষণীয় ৩টি স্টুডিও স্পেসের ইমেজ
 const slides = [
     {
         id: 1,
@@ -30,7 +29,7 @@ const slides = [
         description:
             "Discover inspiring photography studios, film stages, podcast rooms and creative spaces designed to bring your ideas to life.",
         image:
-            "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=2000&q=90",
+            "https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?auto=format&fit=crop&w=2000&q=90", // প্রিমিয়াম সিনেমাটিক ক্যামেরা ও স্টুডিও সেটআপ
     },
     {
         id: 2,
@@ -39,7 +38,7 @@ const slides = [
         description:
             "From professional photography setups to cinematic production stages, find the right environment for your next big project.",
         image:
-            "https://images.unsplash.com/photo-1492619375914-88005aa9e8fb?auto=format&fit=crop&w=2000&q=90",
+            "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=2000&q=90", // প্রফেশনাল ক্যামেরা ও লাইটিং স্টুডিও
     },
     {
         id: 3,
@@ -48,13 +47,14 @@ const slides = [
         description:
             "Explore unique creative spaces, connect with hosts and book the perfect studio for your next production.",
         image:
-            "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=2000&q=90",
+            "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=2000&q=90", // মডার্ন স্টুডিও এবং প্রডাকশন ফ্লোর
     },
 ];
 
 export default function HeroSlider() {
     return (
         <section className="relative w-full overflow-hidden bg-neutral-950">
+            {/* Swiper Slider Component */}
             <Swiper
                 modules={[Autoplay, EffectFade, Pagination]}
                 effect="fade"
@@ -75,34 +75,34 @@ export default function HeroSlider() {
                 {slides.map((slide) => (
                     <SwiperSlide key={slide.id}>
                         <div
-                            className="relative flex min-h-155 items-center bg-cover bg-center bg-no-repeat sm:min-h-170 lg:min-h-185"
+                            className="relative flex min-h-137.5 items-center bg-cover bg-center bg-no-repeat sm:min-h-150 lg:min-h-162.5"
                             style={{
                                 backgroundImage: `
-                  linear-gradient(
-                    90deg,
-                    rgba(10, 10, 10, 0.95) 0%,
-                    rgba(10, 10, 10, 0.78) 45%,
-                    rgba(10, 10, 10, 0.25) 100%
-                  ),
-                  url('${slide.image}')
-                `,
+                                linear-gradient(
+                                    90deg,
+                                    rgba(10, 10, 10, 0.95) 0%,
+                                    rgba(10, 10, 10, 0.78) 45%,
+                                    rgba(10, 10, 10, 0.25) 100%
+                                ),
+                                url('${slide.image}')
+                              `,
                             }}
                         >
-                            {/* Hero content */}
-                            <div className="mx-auto w-full max-w-360 px-5 py-24 sm:px-8 lg:px-12">
+                            {/* Hero Content Wrapper */}
+                            <div className="mx-auto w-full max-w-7xl px-5 py-24 sm:px-8 lg:px-12">
                                 <div className="max-w-3xl">
-                                    {/* Small label */}
+                                    
+                                    {/* Small Tag / Badge */}
                                     <div className="mb-6 flex items-center gap-3">
                                         <span className="flex h-10 w-10 items-center justify-center rounded-full border border-[#d6a75c]/40 bg-[#d6a75c]/10 text-[#d6a75c]">
                                             <Camera size={19} />
                                         </span>
-
                                         <span className="text-xs font-semibold tracking-[0.2em] text-[#d6a75c] sm:text-sm">
                                             {slide.tag}
                                         </span>
                                     </div>
 
-                                    {/* Heading */}
+                                    {/* Main Title */}
                                     <h1 className="max-w-3xl text-4xl leading-[1.15] font-bold tracking-tight text-white sm:text-5xl lg:text-7xl">
                                         {slide.title}
                                     </h1>
@@ -112,7 +112,7 @@ export default function HeroSlider() {
                                         {slide.description}
                                     </p>
 
-                                    {/* CTA buttons */}
+                                    {/* Call to Action Buttons */}
                                     <div className="mt-9 flex flex-col gap-4 sm:flex-row">
                                         <Link
                                             href="/studios"
@@ -140,11 +140,12 @@ export default function HeroSlider() {
                                         </Link>
                                     </div>
 
-                                    {/* Bottom message */}
+                                    {/* Bottom Decorative Message */}
                                     <div className="mt-12 flex items-center gap-3 text-sm text-neutral-400">
                                         <span className="h-px w-10 bg-[#d6a75c]" />
                                         Discover. Create. Inspire.
                                     </div>
+
                                 </div>
                             </div>
                         </div>
@@ -152,8 +153,8 @@ export default function HeroSlider() {
                 ))}
             </Swiper>
 
-            {/* Slider pagination */}
-            <div className="studio-hero-pagination absolute! bottom-8! left-0! z-20 flex justify-center gap-2" />
+            {/* Custom Slider Pagination Container */}
+            <div className="studio-hero-pagination absolute bottom-8 left-0 z-20 flex w-full justify-center gap-2" />
         </section>
     );
 }

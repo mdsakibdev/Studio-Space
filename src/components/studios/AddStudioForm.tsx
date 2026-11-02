@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -187,8 +188,9 @@ export default function AddStudioForm({
   onCancel,
   onSuccess,
 }: AddStudioFormProps) {
-  const { data: session, isPending } = authClient.useSession();
+  const router = useRouter();
 
+  const { data: session, isPending } = authClient.useSession();
   const user = session?.user;
 
   const [formData, setFormData] = useState<StudioFormData>(() => ({
@@ -257,7 +259,9 @@ export default function AddStudioForm({
     setSelectedItems: (items: string[]) => void
   ) => {
     if (selectedItems.includes(item)) {
-      setSelectedItems(selectedItems.filter((value) => value !== item));
+      setSelectedItems(
+        selectedItems.filter((value) => value !== item)
+      );
     } else {
       setSelectedItems([...selectedItems, item]);
     }
@@ -333,22 +337,18 @@ export default function AddStudioForm({
         .filter(Boolean),
 
       instantBooking,
-
-      host: studio?.host || {
-        name: user.name,
-        email: user.email,
-      },
     };
 
     try {
       setIsSubmitting(true);
 
-      // Get JWT Token
       const { data: tokenData, error: tokenError } =
         await authClient.token();
 
       if (tokenError || !tokenData?.token) {
-        throw new Error("Authentication required. Please login again.");
+        throw new Error(
+          "Authentication required. Please login again."
+        );
       }
 
       const token = tokenData.token;
@@ -365,7 +365,6 @@ export default function AddStudioForm({
           },
           body: JSON.stringify({
             ...data,
-            email: user.email,
           }),
         }
       );
@@ -373,11 +372,9 @@ export default function AddStudioForm({
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.message || "Something went wrong.");
-      }
-
-      if (studio && result.matchedCount === 0) {
-        throw new Error("Studio not found or update failed.");
+        throw new Error(
+          result.message || "Something went wrong."
+        );
       }
 
       if (studio) {
@@ -391,7 +388,9 @@ export default function AddStudioForm({
         onSuccess?.(updatedStudio);
       } else {
         toast.success("Studio added successfully!");
-        console.log("Saved Studio:", result);
+
+        // Redirect to My Studios after successful creation
+        router.replace("/my-studios");
       }
     } catch (error) {
       console.error(error);
@@ -424,7 +423,9 @@ export default function AddStudioForm({
           <div>
             <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#d6a75c]/20 bg-[#d6a75c]/10 px-3 py-1.5 text-xs font-semibold text-[#d6a75c]">
               <Sparkles size={14} />
-              {studio ? "UPDATE YOUR CREATIVE SPACE" : "SHARE YOUR CREATIVE SPACE"}
+              {studio
+                ? "UPDATE YOUR CREATIVE SPACE"
+                : "SHARE YOUR CREATIVE SPACE"}
             </div>
 
             <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
@@ -464,7 +465,9 @@ export default function AddStudioForm({
                 minLength={3}
                 maxLength={100}
                 value={formData.title}
-                onChange={(e) => updateField("title", e.target.value)}
+                onChange={(e) =>
+                  updateField("title", e.target.value)
+                }
                 placeholder="e.g. The Creative Photography Studio"
                 className={inputClass}
               />
@@ -475,12 +478,17 @@ export default function AddStudioForm({
               <select
                 required
                 value={formData.category}
-                onChange={(e) => updateField("category", e.target.value)}
+                onChange={(e) =>
+                  updateField("category", e.target.value)
+                }
                 className={inputClass}
               >
                 <option value="">Select a category</option>
                 {categories.map((category) => (
-                  <option key={category.value} value={category.value}>
+                  <option
+                    key={category.value}
+                    value={category.value}
+                  >
                     {category.label}
                   </option>
                 ))}
@@ -488,7 +496,9 @@ export default function AddStudioForm({
             </div>
 
             <div>
-              <label className={labelClass}>Maximum Capacity *</label>
+              <label className={labelClass}>
+                Maximum Capacity *
+              </label>
               <input
                 required
                 type="number"
@@ -503,13 +513,17 @@ export default function AddStudioForm({
             </div>
 
             <div className="sm:col-span-2">
-              <label className={labelClass}>Studio Overview *</label>
+              <label className={labelClass}>
+                Studio Overview *
+              </label>
               <textarea
                 required
                 minLength={20}
                 maxLength={1500}
                 value={formData.overview}
-                onChange={(e) => updateField("overview", e.target.value)}
+                onChange={(e) =>
+                  updateField("overview", e.target.value)
+                }
                 placeholder="Describe your studio, its atmosphere and what creators can do there..."
                 className={textareaClass}
               />
@@ -540,7 +554,9 @@ export default function AddStudioForm({
                 required
                 type="url"
                 value={formData.imageUrl}
-                onChange={(e) => updateField("imageUrl", e.target.value)}
+                onChange={(e) =>
+                  updateField("imageUrl", e.target.value)
+                }
                 placeholder="https://example.com/studio-image.jpg"
                 className={`${inputClass} pl-11`}
               />
@@ -568,7 +584,9 @@ export default function AddStudioForm({
             <textarea
               value={galleryUrls}
               onChange={(e) => setGalleryUrls(e.target.value)}
-              placeholder={"Paste one image URL per line\nhttps://example.com/image-2.jpg\nhttps://example.com/image-3.jpg"}
+              placeholder={
+                "Paste one image URL per line\nhttps://example.com/image-2.jpg\nhttps://example.com/image-3.jpg"
+              }
               className={textareaClass}
             />
             <p className="mt-2 text-xs text-muted-foreground">
@@ -615,7 +633,9 @@ export default function AddStudioForm({
             </div>
 
             <div>
-              <label className={labelClass}>Security Deposit ($)</label>
+              <label className={labelClass}>
+                Security Deposit ($)
+              </label>
               <input
                 type="number"
                 min="0"
@@ -671,18 +691,24 @@ export default function AddStudioForm({
               <input
                 required
                 value={formData.city}
-                onChange={(e) => updateField("city", e.target.value)}
+                onChange={(e) =>
+                  updateField("city", e.target.value)
+                }
                 placeholder="e.g. Dhaka"
                 className={inputClass}
               />
             </div>
 
             <div>
-              <label className={labelClass}>Area / Neighborhood *</label>
+              <label className={labelClass}>
+                Area / Neighborhood *
+              </label>
               <input
                 required
                 value={formData.area}
-                onChange={(e) => updateField("area", e.target.value)}
+                onChange={(e) =>
+                  updateField("area", e.target.value)
+                }
                 placeholder="e.g. Dhanmondi"
                 className={inputClass}
               />
@@ -693,7 +719,9 @@ export default function AddStudioForm({
               <textarea
                 required
                 value={formData.address}
-                onChange={(e) => updateField("address", e.target.value)}
+                onChange={(e) =>
+                  updateField("address", e.target.value)
+                }
                 placeholder="Enter the complete studio address..."
                 className="min-h-24 w-full resize-y rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-[#d6a75c] focus:ring-2 focus:ring-[#d6a75c]/15"
               />
@@ -717,10 +745,11 @@ export default function AddStudioForm({
               return (
                 <label
                   key={amenity}
-                  className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3.5 text-sm transition ${selected
-                    ? "border-[#d6a75c]/50 bg-[#d6a75c]/10 text-foreground"
-                    : "border-border bg-background text-muted-foreground hover:border-[#d6a75c]/40"
-                    }`}
+                  className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3.5 text-sm transition ${
+                    selected
+                      ? "border-[#d6a75c]/50 bg-[#d6a75c]/10 text-foreground"
+                      : "border-border bg-background text-muted-foreground hover:border-[#d6a75c]/40"
+                  }`}
                 >
                   <input
                     type="checkbox"
@@ -731,10 +760,11 @@ export default function AddStudioForm({
                     className="sr-only"
                   />
                   <span
-                    className={`flex h-5 w-5 items-center justify-center rounded-md border ${selected
-                      ? "border-[#d6a75c] bg-[#d6a75c] text-neutral-950"
-                      : "border-border"
-                      }`}
+                    className={`flex h-5 w-5 items-center justify-center rounded-md border ${
+                      selected
+                        ? "border-[#d6a75c] bg-[#d6a75c] text-neutral-950"
+                        : "border-border"
+                    }`}
                   >
                     {selected && <Check size={13} />}
                   </span>
@@ -761,10 +791,11 @@ export default function AddStudioForm({
               return (
                 <label
                   key={item}
-                  className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3.5 text-sm transition ${selected
-                    ? "border-[#d6a75c]/50 bg-[#d6a75c]/10 text-foreground"
-                    : "border-border bg-background text-muted-foreground hover:border-[#d6a75c]/40"
-                    }`}
+                  className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3.5 text-sm transition ${
+                    selected
+                      ? "border-[#d6a75c]/50 bg-[#d6a75c]/10 text-foreground"
+                      : "border-border bg-background text-muted-foreground hover:border-[#d6a75c]/40"
+                  }`}
                 >
                   <input
                     type="checkbox"
@@ -775,10 +806,11 @@ export default function AddStudioForm({
                     className="sr-only"
                   />
                   <span
-                    className={`flex h-5 w-5 items-center justify-center rounded-md border ${selected
-                      ? "border-[#d6a75c] bg-[#d6a75c] text-neutral-950"
-                      : "border-border"
-                      }`}
+                    className={`flex h-5 w-5 items-center justify-center rounded-md border ${
+                      selected
+                        ? "border-[#d6a75c] bg-[#d6a75c] text-neutral-950"
+                        : "border-border"
+                    }`}
                   >
                     {selected && <Check size={13} />}
                   </span>
@@ -807,10 +839,11 @@ export default function AddStudioForm({
                 return (
                   <label
                     key={day}
-                    className={`flex cursor-pointer items-center gap-2 rounded-xl border p-3 text-sm transition ${selected
-                      ? "border-[#d6a75c]/50 bg-[#d6a75c]/10 text-foreground"
-                      : "border-border bg-background text-muted-foreground"
-                      }`}
+                    className={`flex cursor-pointer items-center gap-2 rounded-xl border p-3 text-sm transition ${
+                      selected
+                        ? "border-[#d6a75c]/50 bg-[#d6a75c]/10 text-foreground"
+                        : "border-border bg-background text-muted-foreground"
+                    }`}
                   >
                     <input
                       type="checkbox"
@@ -853,7 +886,9 @@ export default function AddStudioForm({
             </div>
 
             <div className="sm:col-span-2">
-              <label className={labelClass}>Cancellation Policy</label>
+              <label className={labelClass}>
+                Cancellation Policy
+              </label>
               <select
                 value={formData.cancellationPolicy}
                 onChange={(e) =>
@@ -899,7 +934,9 @@ export default function AddStudioForm({
             <input
               type="checkbox"
               checked={instantBooking}
-              onChange={(e) => setInstantBooking(e.target.checked)}
+              onChange={(e) =>
+                setInstantBooking(e.target.checked)
+              }
               className="mt-1 accent-[#d6a75c]"
             />
             <span>

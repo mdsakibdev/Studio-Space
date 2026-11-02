@@ -47,15 +47,16 @@ export default function ExploreStudios() {
   const [error, setError] = useState("");
 
   const [search, setSearch] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [appliedMin, setAppliedMin] = useState("");
   const [appliedMax, setAppliedMax] = useState("");
   const [sortBy, setSortBy] = useState("newest");
   const [favorites, setFavorites] = useState<string[]>([]);
+  
   // URL থেকে category নিয়ে filter select করা
-useEffect(() => {
+const [selectedCategory, setSelectedCategory] = useState(() => {
+  if (typeof window === "undefined") return "all";
   const params = new URLSearchParams(window.location.search);
   const categoryFromUrl = params.get("category");
 
@@ -63,8 +64,8 @@ useEffect(() => {
     (category) => category.value === categoryFromUrl
   );
 
-  setSelectedCategory(isValidCategory ? categoryFromUrl! : "all");
-}, []);
+  return isValidCategory && categoryFromUrl ? categoryFromUrl : "all";
+});
 
   // MongoDB থেকে সব Studio নিয়ে আসা
   useEffect(() => {
@@ -257,8 +258,8 @@ useEffect(() => {
                   key={category.value}
                   onClick={() => setSelectedCategory(category.value)}
                   className={`rounded-full px-4 py-2 text-xs font-semibold transition ${selectedCategory === category.value
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "bg-muted text-foreground hover:bg-primary/10"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "bg-muted text-foreground hover:bg-primary/10"
                     }`}
                 >
                   {category.label}
@@ -426,7 +427,7 @@ useEffect(() => {
 
                   <Link
                     href={`/studios/${studio._id}`}
-                    className="flex h-11 items-center justify-center gap-2 rounded-xl bg-black text-sm font-semibold text-background transition hover:bg-primary hover:text-primary-foreground"
+                    className="flex h-11 items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-white transition  "
                   >
                     View Details
                     <ArrowRight size={16} />

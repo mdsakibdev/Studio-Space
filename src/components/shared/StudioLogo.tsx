@@ -9,83 +9,54 @@ export default function StudioLogo({
 }: StudioLogoProps) {
   return (
     <div
-      className={`group inline-flex cursor-pointer select-none flex-col transition-all duration-300 ${className}`}
+      className={`group inline-flex items-center gap-3 select-none transition-all duration-300 ${className}`}
     >
-      {iconOnly ? (
-        /* Standalone Icon */
-        <div className="relative flex items-center justify-center">
-          <div className="absolute inset-0 rounded-full bg-amber-500/20 blur-md transition-all duration-300 group-hover:bg-amber-500/40" />
-          <svg viewBox="0 0 48 48" className="relative h-9 w-9 transform transition-transform duration-300 group-hover:scale-105">
-            <defs>
-              <linearGradient id="studio-gold-icon" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#FCD34D" />
-                <stop offset="50%" stopColor="#F59E0B" />
-                <stop offset="100%" stopColor="#D97706" />
-              </linearGradient>
-            </defs>
-            <circle
-              cx="24"
-              cy="24"
-              r="20"
-              fill="none"
-              stroke="url(#studio-gold-icon)"
-              strokeWidth="3.5"
-              className="drop-shadow-sm"
-            />
-            <path
-              d="M19 15L33 24L19 33V15Z"
-              fill="url(#studio-gold-icon)"
-              className="transition-transform duration-300 group-hover:translate-x-0.5"
-            />
-          </svg>
-        </div>
-      ) : (
-        /* Full Logo with Brand & Tagline */
-        <>
-          <div className="flex items-center whitespace-nowrap leading-none">
-            {/* "Studi" part */}
-            <span className="text-[26px] font-black tracking-tight text-neutral-900 transition-colors duration-200 dark:text-white sm:text-[30px] lg:text-[32px]">
-              Studi
-            </span>
+      {/* ১. ইউনিক স্টুডিও/ক্যামেরা লেন্স কাস্টম SVG আইকন */}
+      <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-linear-to-br from-neutral-900 via-neutral-800 to-black p-2.5 shadow-lg shadow-amber-500/10 ring-1 ring-amber-500/30 transition-all duration-300 group-hover:scale-105 group-hover:ring-amber-500/60 dark:bg-card dark:ring-border">
+        {/* ব্যাকগ্রাউন্ড গোল্ডেন গ্লো */}
+        <div className="absolute inset-0 rounded-2xl bg-amber-500/10 blur-md transition-all duration-300 group-hover:bg-amber-500/25 group-hover:blur-lg" />
+        
+        {/* ইউনিক ক্যামেরা/স্টুডিও লেন্স SVG */}
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="relative h-6 w-6 text-amber-500 transition-transform duration-300 group-hover:rotate-12"
+        >
+          {/* বাইরের রিং / লেন্স বডি */}
+          <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
+          {/* ভেতরের অ্যাপারচার / লেন্স সার্কেল */}
+          <circle cx="12" cy="13" r="4" />
+          {/* প্লে / ক্রিয়েটিভ ফোকাস ডট */}
+          <path d="M12 11v4" strokeWidth="2.5" className="text-amber-400" />
+        </svg>
+      </div>
 
-            {/* Custom Interactive "o" with Play Icon */}
-            <span className="relative mx-[0.5px] inline-flex items-center justify-center">
-              <span className="text-[26px] font-black tracking-tight text-neutral-900 transition-colors duration-200 dark:text-white sm:text-[30px] lg:text-[32px]">
-                o
-              </span>
-              <svg
-                viewBox="0 0 24 24"
-                className="absolute h-[32%] w-[32%] transform transition-transform duration-300 group-hover:scale-125"
-                aria-hidden="true"
-              >
-                <path
-                  d="M7 4L19 12L7 20V4Z"
-                  className="fill-amber-500 drop-shadow-[0_0_8px_rgba(245,158,11,0.6)]"
-                />
-              </svg>
+      {/* ২. ডান পাশে ব্র্যান্ড নেম ও ট্যাগলাইন */}
+      {!iconOnly && (
+        <div className="flex flex-col">
+          {/* StudioSpace Brand Name */}
+          <div className="flex items-center text-xl font-extrabold tracking-tight sm:text-2xl">
+            <span className="text-foreground transition-colors duration-200">
+              Studio
             </span>
-
-            {/* "Space" Gradient Text */}
-            <span className="ml-1 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 bg-clip-text text-[26px] font-black tracking-tight text-transparent transition-all duration-300 group-hover:brightness-110 sm:text-[30px] lg:text-[32px]">
+            <span className="bg-linear-to-r from-amber-400 via-amber-500 to-amber-600 bg-clip-text text-transparent transition-all duration-300 group-hover:brightness-110">
               Space
             </span>
           </div>
 
           {/* Micro Tagline */}
-          <div className="mt-1 flex items-center justify-between px-0.5 text-[8px] font-bold uppercase tracking-[0.3em] transition-colors duration-200 sm:text-[9px]">
-            <span className="text-neutral-500 dark:text-neutral-400">
-              Find
-            </span>
-            <span className="h-1 w-1 rounded-full bg-amber-500/80" />
-            <span className="text-neutral-500 dark:text-neutral-400">
-              Book
-            </span>
-            <span className="h-1 w-1 rounded-full bg-amber-500/80" />
-            <span className="text-neutral-500 dark:text-neutral-400">
-              Create
-            </span>
+          <div className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+            <span>Find</span>
+            <span className="h-1 w-1 rounded-full bg-amber-500" />
+            <span>Book</span>
+            <span className="h-1 w-1 rounded-full bg-amber-500" />
+            <span>Create</span>
           </div>
-        </>
+        </div>
       )}
     </div>
   );

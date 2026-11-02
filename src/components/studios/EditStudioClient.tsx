@@ -20,7 +20,7 @@ export default function EditStudioClient({
         studio={studio}
         onCancel={() => router.back()}
         onSuccess={() => {
-          router.replace("/my-listings");
+          router.replace("/my-studios");
           router.refresh();
         }}
       />
