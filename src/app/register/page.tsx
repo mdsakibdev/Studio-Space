@@ -125,9 +125,6 @@ const handleGoogleSignUp = async () =>{
         <div className="hidden lg:block">
           <div className="mb-6 flex items-center gap-3">
             <StudioLogo/>
-            
-
-            
           </div>
 
           <p className="mb-4 text-sm font-semibold uppercase tracking-[0.25em] text-primary">
@@ -155,9 +152,7 @@ const handleGoogleSignUp = async () =>{
 
             <div className="mb-7 text-center lg:text-left">
               <div className="mb-5 flex justify-center lg:hidden">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-                  <Aperture size={27} />
-                </div>
+                <StudioLogo/>
               </div>
 
               <h2 className="text-3xl font-bold tracking-tight">

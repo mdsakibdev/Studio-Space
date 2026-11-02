@@ -125,10 +125,8 @@ export default function LoginPage() {
           <div className="rounded-2xl border border-border bg-card p-6 shadow-xl sm:p-9">
 
             <div className="mb-8 text-center lg:text-left">
-              <div className="mb-5 flex justify-center lg:hidden">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-                  <Aperture size={27} />
-                </div>
+              <div className="mb-5  lg:hidden">
+                <StudioLogo/>
               </div>
 
               <h2 className="text-3xl font-bold tracking-tight">
