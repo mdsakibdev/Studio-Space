@@ -1,36 +1,105 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# StudioSpace
 
-## Getting Started
+A creative-space discovery and booking platform that connects creators with studio owners.
 
-First, run the development server:
+<p align="center">
+  <img src="https://i.ibb.co/KjjNK7Ks/Studio-Spac.png" alt="StudioSpace Website Banner" width="100%" />
+</p>
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+<p align="center">
+  <a href="https://studio-spach.vercel.app/">
+    <strong>View Live Website</strong>
+  </a>
+</p>
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## About the Project
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+StudioSpace helps photographers, filmmakers, musicians, podcasters, and other creators discover creative spaces that fit their projects.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Users can explore studios, compare their details, and submit booking requests. Studio owners can list their spaces and manage their studio information and bookings.
 
-## Learn More
+**Live Demo:** https://studio-spach.vercel.app/
 
-To learn more about Next.js, take a look at the following resources:
+## Key Features
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Studio Discovery
+- Browse available creative studios.
+- Explore studios by category:
+  - Photo Studios
+  - Sound Stages
+  - Podcast Rooms
+  - Music Suites
+  - Art Workshops
+- View studio details, images, location, pricing, capacity, amenities, equipment, and availability.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Booking
+- Select a studio and provide booking details.
+- View personal bookings.
+- Cancel eligible bookings.
 
-## Deploy on Vercel
+### Host Dashboard
+- Add a new studio listing.
+- Edit and manage personal studio listings.
+- Add a cover image and gallery image URLs.
+- Configure hourly rates and security deposits.
+- Set maximum capacity and minimum booking duration.
+- Add location, amenities, and equipment.
+- Configure available days and opening/closing times.
+- Set cancellation policies and studio rules.
+- Add space highlights.
+- Enable or disable instant booking.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### User Experience
+- Responsive design for desktop, tablet, and mobile.
+- Light and dark theme support.
+- Toast notifications for user feedback.
+- Reusable UI components.
+- Protected account features.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Tech Stack
+
+| Technology | Purpose |
+|---|---|
+| Next.js (App Router) | Frontend Framework |
+| React | UI Development |
+| TypeScript | Type Safety |
+| Tailwind CSS | Styling |
+| Better Auth | Authentication |
+| Express.js | Backend API |
+| MongoDB | Database |
+| JWT / JOSE | API Authentication |
+| Sonner | Toast Notifications |
+| Lucide React | Icons |
+| Vercel | Deployment |
+
+## Project Architecture
+
+StudioSpace uses a separate frontend and backend architecture.
+
+- **Frontend:** Next.js application.
+- **Backend:** Express.js API.
+- **Database:** MongoDB.
+- **Authentication:** Better Auth.
+- **Token Verification:** JWT with JOSE and JWKS.
+
+Protected backend operations use the authenticated user's identity from the verified token. Ownership checks are enforced by the backend rather than trusting identity details sent by the client.
+
+## Main Pages
+
+- Home
+- Explore Studios
+- Studio Details
+- How It Works
+- About Us
+- Add New Studio
+- Edit Studio
+- My Studios
+- Booking Flow
+- My Bookings
+
+## Environment Variables
+
+Create a `.env.local` file in the frontend project root:
+
+```env
+NEXT_PUBLIC_API_URL=YOUR_BACKEND_API_BASE_URL
